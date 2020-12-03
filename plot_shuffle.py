@@ -8,18 +8,24 @@ secondary_properties = ['env','rvir','conc','conc_desc','vdisp','vdisp_desc','s2
 sec_labels = [r'${\rm env. \ (desc.)}$',r'$R_{\rm vir} \ {\rm (desc.)}$',r'$c_{\rm NFW} \ {\rm (mix)}$',r'$c_{\rm NFW} \ {\rm (desc.)}$',r'$V_{\rm disp} \ {\rm (mix)}$',r'$V_{\rm disp} \ {\rm (desc.)}$',r'$V_{\rm disp}^2 R \ {\rm (desc.)}$',r'$V_{\rm disp}^2 R \ {\rm (asc.)}$',r'${\rm spin \ (desc.)}$']
 line = np.linspace(0,40,3)
 
+num_gals = 6000 #6000 # 1200 # 12000
+type_gal = 'mstar' #'mstar'#'sfr'
+
+type_dict = {'mstar': 'Mass-selected', 'sfr': 'SFR-selected'}
+type_str = type_dict[type_gal]
 
 bin_centers = np.load("data_rat/bin_centers.npy")
 
 
-rat_mean_shuff_sam = np.load("data_rat/rat_mean_sam_shuff.npy")
-rat_err_shuff_sam = np.load("data_rat/rat_err_sam_shuff.npy")
-    
-rat_mean_shuff_hydro = np.load("data_rat/rat_mean_hydro_shuff.npy")
-rat_err_shuff_hydro = np.load("data_rat/rat_err_hydro_shuff.npy")
+rat_mean_shuff_sam = np.load("data_rat/rat_mean_sam_"+str(num_gals)+"_"+type_gal+"_shuff.npy")
+rat_err_shuff_sam = np.load("data_rat/rat_err_sam_"+str(num_gals)+"_"+type_gal+"_shuff.npy")
+
+rat_mean_shuff_hydro = np.load("data_rat/rat_mean_hydro_"+str(num_gals)+"_"+type_gal+"_shuff.npy")
+rat_err_shuff_hydro = np.load("data_rat/rat_err_hydro_"+str(num_gals)+"_"+type_gal+"_shuff.npy")
 
 
-plt.subplots(3,3,figsize=(18,12))
+fig, axes = plt.subplots(3,3,figsize=(18,12))
+fig.suptitle('%s, %d gals.'%(type_str,num_gals), fontsize=20)
 
 n_sec = len(secondary_properties)
 
@@ -29,11 +35,11 @@ for i in range(n_sec):
     secondary_property = secondary_properties[i]
     sec_label = sec_labels[i]
     
-    rat_mean_sam = np.load("data_rat/rat_mean_sam_"+secondary_property+".npy")
-    rat_err_sam = np.load("data_rat/rat_err_sam_"+secondary_property+".npy")
+    rat_mean_sam = np.load("data_rat/rat_mean_sam_"+str(num_gals)+"_"+type_gal+"_"+secondary_property+".npy")
+    rat_err_sam = np.load("data_rat/rat_err_sam_"+str(num_gals)+"_"+type_gal+"_"+secondary_property+".npy")
     
-    rat_mean_hydro = np.load("data_rat/rat_mean_hydro_"+secondary_property+".npy")
-    rat_err_hydro = np.load("data_rat/rat_err_hydro_"+secondary_property+".npy")
+    rat_mean_hydro = np.load("data_rat/rat_mean_hydro_"+str(num_gals)+"_"+type_gal+"_"+secondary_property+".npy")
+    rat_err_hydro = np.load("data_rat/rat_err_hydro_"+str(num_gals)+"_"+type_gal+"_"+secondary_property+".npy")
 
     plt.plot(line,np.ones(len(line)),'k--')
 
