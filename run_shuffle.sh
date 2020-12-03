@@ -1,4 +1,10 @@
-python shuffle.py 6000 mstar 
+python shuffle.py 1200 mstar
+python shuffle.py 6000 mstar
+python shuffle.py 12000 mstar
+
+python shuffle.py 1200 sfr
+python shuffle.py 6000 sfr
+python shuffle.py 12000 sfr 
 
 python shuffle.py 6000 mstar env
 python shuffle.py 6000 mstar rvir

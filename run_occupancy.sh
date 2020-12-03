@@ -1,4 +1,10 @@
+python occupancy_variation.py 1200 mstar
 python occupancy_variation.py 6000 mstar
+python occupancy_variation.py 12000 mstar
+
+python occupancy_variation.py 1200 sfr
+python occupancy_variation.py 6000 sfr
+python occupancy_variation.py 12000 sfr
 
 python occupancy_variation.py 6000 mstar env
 python occupancy_variation.py 6000 mstar rvir

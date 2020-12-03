@@ -1,3 +1,5 @@
+import matplotlib
+matplotlib.use('Agg')
 import numpy as np
 import matplotlib.pyplot as plt
 import plotparams
@@ -25,12 +27,12 @@ for i in range(len(type_gals)):
     for j in range(len(num_gals)):
         
         plt.subplot(len(type_gals),len(num_gals),k+1)
-        k += 1
+
         type_gal = type_gals[i]
         num_gal = num_gals[j]
         type_str = type_dict[type_gal]
         
-        plt.title('%s, %d gals.'%(type_str,num_gals), fontsize=23, y=0.995)
+        plot_label = '%s, %d gals.'%(type_str,num_gal)
 
         hist_sam = np.load("data_hod/hist_sam_"+str(num_gal)+"_"+type_gal+".npy")#
         hist_hydro = np.load("data_hod/hist_hydro_"+str(num_gal)+"_"+type_gal+".npy")#
@@ -45,21 +47,22 @@ for i in range(len(type_gals)):
 
         plt.xscale('log')
         plt.yscale('log')
-        if i == 0:
+        if k == 0:
             plt.legend(bbox_to_anchor=(-0.12, 1), loc='upper right',frameon=False,fontsize=18)
         plt.ylim([1.e-2,100.]) #
         plt.xlim([1.e10,1.e15])
-        plt.text(1.e12,.014,plot_label)
+        plt.text(1.e11,.014,plot_label)
 
-        if i >= 3:
+        if k >= 3:
             plt.xlabel(r'$M_{\rm halo}$')
         else:
             plt.gca().axes.xaxis.set_ticklabels([])
             plt.gca().axes.xaxis.set_ticks([])
-        if i in [0,3]:
+        if k in [0,3]:
             plt.ylabel(r'$\langle N_{\rm gal} \rangle$') #
         else:
             plt.gca().axes.yaxis.set_ticklabels([])
             plt.gca().axes.yaxis.set_ticks([])
+        k += 1
 plt.savefig("figs/HOD.png") #
 #plt.show()
