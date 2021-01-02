@@ -1,3 +1,9 @@
-sh run_occupancy.sh
+cd HOD
+sh run_hod.sh
+cd ..
+cd shuffle
 sh run_shuffle.sh
+cd ..
+cd SHMR
 sh run_shmr.sh
+cd ..

@@ -1,0 +1,12 @@
+cd HOD
+python plot_all_hod.py
+python plot_hod.py
+cd ..
+cd shmr
+python plot_all_shmr.py
+python plot_shmr.py
+cd ..
+cd shuffle
+python plot_all_shuffle.py
+python plot_shuffle.py
+cd ..
