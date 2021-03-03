@@ -3,12 +3,11 @@ import numpy as np
 import sys
 
 proxy = "m200m"
-opts = ["partial_env_cw","partial_s2r","shuff","partial_vani","partial_tot_pot"]
+#opts = ["partial_env_cw","partial_s2r","shuff","partial_vani","partial_tot_pot"]
 
-# For paper
-#opts = ["shuff","partial_env_cw","partial_vani","partial_tot_pot","partial_s2r"]
+opts = ["norm"]
 
-void = np.load("data_clean/clean_void_true.npy")
+void = np.load("data/clean_void_true.npy")
 void_g = void[:,0]
 void_xyz = void[:,1:]
 
@@ -19,7 +18,7 @@ N_bin = 21
 for i in range(N_r):
     opt = opts[i]
     opt_name = '-'.join(opt.split('_'));print(opt_name)
-    void_opt = np.load("data_clean/clean_void_"+proxy+"_"+opt+".npy")
+    void_opt = np.load("data/clean_void_"+opt+".npy")
     void_g_opt = void_opt[:,0]
     void_xyz_opt = void_opt[:,1:]
     
@@ -29,7 +28,10 @@ for i in range(N_r):
     for i_x in range(N_dim):
         for i_y in range(N_dim):
             for i_z in range(N_dim):
-                min_bin = 10.#np.min(np.hstack((void_g,void_g_opt)))
+                # og
+                #min_bin = 10.#np.min(np.hstack((void_g,void_g_opt)))
+                # TESTING
+                min_bin = 1.
                 max_bin = 24.#np.max(np.hstack((void_g,void_g_opt)))
                 bins = np.linspace(min_bin,max_bin,N_bin)
                 #bins = np.logspace(np.log10(min_bin),np.log10(max_bin),N_bin)
@@ -69,11 +71,11 @@ for i in range(N_r):
     rat_g_mean = np.mean(rat_g,axis=1)
     rat_g_err = np.sqrt(N_dim**3-1)*np.std(rat_g,axis=1)
 
-    np.save("data_jack/bin_centers.npy",c)
-    np.save("data_jack/void_true_mean.npy",hist_g_mean)
-    np.save("data_jack/void_true_err.npy",hist_g_err)
-    np.save("data_jack/void_"+proxy+"_"+opt+"_mean.npy",hist_g_opt_mean)
-    np.save("data_jack/void_"+proxy+"_"+opt+"_err.npy",hist_g_opt_err)
-    np.save("data_jack/void_"+proxy+"_"+opt+"_rat_mean.npy",rat_g_mean)
-    np.save("data_jack/void_"+proxy+"_"+opt+"_rat_err.npy",rat_g_err)
+    np.save("data/bin_centers.npy",c)
+    np.save("data/void_true_mean.npy",hist_g_mean)
+    np.save("data/void_true_err.npy",hist_g_err)
+    np.save("data/void_"+opt+"_mean.npy",hist_g_opt_mean)
+    np.save("data/void_"+opt+"_err.npy",hist_g_opt_err)
+    np.save("data/void_"+opt+"_rat_mean.npy",rat_g_mean)
+    np.save("data/void_"+opt+"_rat_err.npy",rat_g_err)
 

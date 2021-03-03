@@ -14,11 +14,12 @@ num_gals_hydro = 12000
 #hydro_dir = '/mnt/gosling1/boryanah/TNG100/'
 hydro_dir = '/mnt/gosling1/boryanah/TNG300/'
 #mass_type = 'Crit'
-mass_type = 'Mean'
-snap_str = '_55'
-#snap_str = ''
-#gal_type = 'Mass'
-gal_type = 'ELG_DESI'
+mass_type = 'TopHat'
+#mass_type = 'Mean'
+#snap_str = '_55'
+snap_str = ''
+gal_type = 'Mass'
+#gal_type = 'ELG_DESI'
 
 # fp dmo matching
 # TESTING original old
@@ -39,7 +40,7 @@ save_hydro_dir = ''
 
 # you can try to write your own version of this
 # if you give this function an (N_particles,3) numpy array, it gives back the density for a given Lbox and cell number N_dim
-def get_density(pos,N_dim=128,Lbox=75.):
+def get_density(pos):
     # x, y, and z position
     g_x = pos[:,0]
     g_y = pos[:,1]
@@ -187,3 +188,8 @@ halo_ijk = (GroupPos_dm/gr_size).astype(int)%n_gr
 GroupEnv_dm = density[halo_ijk[:,0],halo_ijk[:,1],halo_ijk[:,2]]
 
 np.save(save_hydro_dir+"GroupEnv_dm"+snap_str+".npy", GroupEnv_dm)
+
+halo_ijk = (GroupPos_fp/gr_size).astype(int)%n_gr
+GroupEnv_fp = density[halo_ijk[:,0],halo_ijk[:,1],halo_ijk[:,2]]
+
+np.save(save_hydro_dir+"GroupEnv_fp"+snap_str+".npy", GroupEnv_fp)

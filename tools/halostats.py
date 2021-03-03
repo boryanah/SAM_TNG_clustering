@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import Corrfunc
 
-def get_hod(masses,counts):
+def get_hod(masses,counts,other_group_mass=None):
     # number of bin edges
     n_bins = 31
     # bin edges (btw Delta = np.log10(bins[1])-np.log10(bins[0]) in log space)
@@ -10,9 +10,20 @@ def get_hod(masses,counts):
     # bin centers
     bin_cents = 0.5*(bins[1:]+bins[:-1])
     # This histogram tells you how many halos there are in each bin inerval (n_bins-1)
-    hist_norm, edges = np.histogram(masses,bins=bins)
-    hist_weighted, edges = np.histogram(masses,bins=bins,weights=counts)
-    hist_hod = hist_weighted/hist_norm
+    if other_group_mass is not None:
+        
+        i_sort = np.argsort(masses)[::-1]
+        counts_sorted = counts[i_sort]
+        i_sort_other = np.argsort(other_group_mass)[::-1]
+        other_group_mass_sorted = other_group_mass[i_sort_other]
+        N_min = np.min([len(masses), len(other_group_mass)])
+        hist_weighted, edges = np.histogram(other_group_mass_sorted[:N_min],bins=bins,weights=counts_sorted[:N_min])
+        hist_norm, edges = np.histogram(other_group_mass_sorted[:N_min],bins=bins)
+        hist_hod = hist_weighted/hist_norm
+    else:
+        hist_norm, edges = np.histogram(masses,bins=bins)
+        hist_weighted, edges = np.histogram(masses,bins=bins,weights=counts)
+        hist_hod = hist_weighted/hist_norm
 
     return hist_hod, bin_cents
 
@@ -98,6 +109,17 @@ def plot_hmf(masses,label):
     plt.ylabel(r'$N_{\rm halo}$')
     plt.xlabel(r'$M_{\rm halo} [M_\odot/h]$')
 
+def get_hmf(masses):
+    # number of bin edges
+    n_bins = 31
+    bins = np.logspace(8.,15.,n_bins)
+    # bin centers
+    bin_cents = 0.5*(bins[1:]+bins[:-1])
+
+    hist, edges = np.histogram(masses,bins=bins)
+
+    return hist, bin_cents
+    
 def get_jack_corr(xyz_true,w_true,xyz_hod,w_hod,Lbox):
     
     # bins for the correlation function
@@ -107,6 +129,20 @@ def get_jack_corr(xyz_true,w_true,xyz_hod,w_hod,Lbox):
 
     # dimensions for jackknifing
     N_dim = 3
+
+    true_max = xyz_true.max()
+    true_min = xyz_true.min()
+    hod_max = xyz_hod.max()
+    hod_min = xyz_hod.min()
+    
+    print("true max = ", true_max)
+    print("true min = ", true_min)
+    print("hod max = ", hod_max)
+    print("hod min = ", hod_min)
+    if true_max > Lbox or true_min > Lbox or hod_max > Lbox or hod_min > Lbox:
+        print("NOTE: we are using UNFAIR methods")
+        xyz_true = xyz_true % Lbox
+        xyz_hod = xyz_hod % Lbox
 
     # empty arrays to record data
     Rat_hodtrue = np.zeros((N_bin-1,N_dim**3))
@@ -280,13 +316,17 @@ def get_shuff_counts(count_halo,group_mass,record_relative=False,order_by=None,o
     return count_halo_hod
 
 
-def get_hist_count(inds_top, hosts_top, sub_pos, group_mass, group_pos, Lbox=75, record_relative=False):
+def get_hist_count(inds_top, hosts_top, sub_pos, group_mass, group_pos, Lbox, record_relative=False, group_rad=None, other_group_mass=None):
     '''
     this function returns the HOD, bin centers of the HOD and most importantly galaxy counts per halo for subhalos with indices inds_top
     '''
 
     pos_top = sub_pos[inds_top]
     # Find the masses of their halo parents from the original group_mass array
+    if other_group_mass is not None:
+        # tuks
+        pass
+    
     masses_top = group_mass[hosts_top]
     # Knowing the ID's of the relevant halos (i.e. those who are hosting a galaxy),
     # tell me which ID's are unique, what indices in the hosts_top array these
@@ -317,7 +357,11 @@ def get_hist_count(inds_top, hosts_top, sub_pos, group_mass, group_pos, Lbox=75,
             rel_pos_gals_halo[cumulative:cumulative+n_gal] = pos_top[gal_sel]-group_cen
             nstart_halo[hosts[i]] = cumulative
 
+            if group_rad is not None:
+                rel_pos_norm = rel_pos_gals_halo/group_rad[hosts[i]]
+                
             cumulative += n_gal
+            
         print("total number of galaxies = ",cumulative)
         dx = rel_pos_gals_halo[:,0]
         dy = rel_pos_gals_halo[:,1]
@@ -341,6 +385,9 @@ def get_hist_count(inds_top, hosts_top, sub_pos, group_mass, group_pos, Lbox=75,
         print(nstart_halo[:100])
         print(count_halo[:100])
         '''
+
+        if group_rad is not None:
+            return hist, bin_cents, count_halo, nstart_halo, rel_pos_norm
         
         return hist, bin_cents, count_halo, nstart_halo, rel_pos_gals_halo
 

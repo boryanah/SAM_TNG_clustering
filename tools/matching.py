@@ -58,7 +58,7 @@ def main():
     Lbox = 75 # Mpc/h
 
     # load SAM
-    SAM_dir = '/mnt/store1/boryanah/SAM_subvolumes/'
+    SAM_dir = '/mnt/store1/boryanah/SAM_subvolumes_TNG100/'
     hosthaloid = np.load(SAM_dir+'GalpropHaloIndex_corr.npy').astype(int)
     mhalo = np.load(SAM_dir+'GalpropMhalo.npy')
     mstar = np.load(SAM_dir+'GalpropMstar.npy')

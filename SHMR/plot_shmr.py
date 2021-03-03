@@ -1,20 +1,22 @@
 import numpy as np
-import matplotlib
-matplotlib.use('Agg')
+#import matplotlib
+#matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import plotparams
 plotparams.buba()
 #import distinct_colours
 
-num_gals = [1200,6000,12000]
+#num_gals = [1200,6000,12000]
+num_gals = [6000, 12000, 24000]
 #type_gals = ['mstar','sfr']
 type_gals = ['mstar','mhalo']
+#type_gals = ['mstar','sfr']
 
-type_dict = {'mstar': 'Mass-selected','mhalo': 'HaloMass-selected', 'sfr': 'SFR-selected'}
+type_dict = {'mstar': 'M_\\ast$-${\\rm selected', 'mstar_cent': 'M_\ast$-${\\rm selected \ centrals', 'mhalo': 'M_{\\rm halo}$-${\\rm selected', 'sfr': '{\\rm SFR}$-${\\rm selected', 'sfr_cent': '{\\rm SFR}$-${\\rm selected \ centrals'}
 
 line = np.linspace(0,40,3)
 
-bin_cents = np.load("data_shmr/bin_cents.npy")
+bin_cents = np.load("data/bin_cents.npy")
 
 # maybe load average
 
@@ -33,11 +35,16 @@ for i in range(len(type_gals)):
         num_gal = num_gals[j]
         type_str = type_dict[type_gal]
 
-        plot_label = r'%s, %d gals.'%(type_str,num_gal)
+        if 'alo' in type_gal:
+            objs = 'halos'
+        else:
+            objs = 'gals.'
+        
+        plot_label = r'$%s, \ %d \ %s}$'%(type_str,num_gal,objs)
         #plt.title(plot_label), fontsize=23, y=0.995)
 
-        shmr_sam = np.load("data_shmr/shmr_sam_"+str(num_gal)+"_"+type_gal+".npy")#
-        shmr_hydro = np.load("data_shmr/shmr_hydro_"+str(num_gal)+"_"+type_gal+".npy")#
+        shmr_sam = np.load("data/shmr_sam_"+str(num_gal)+"_"+type_gal+".npy")#
+        shmr_hydro = np.load("data/shmr_hydro_"+str(num_gal)+"_"+type_gal+".npy")#
 
         plt.plot(line,np.ones(len(line)),'k--')
 
@@ -50,10 +57,11 @@ for i in range(len(type_gals)):
         plt.xscale('log')
         plt.yscale('log')
         if k == 0:
-            plt.legend(bbox_to_anchor=(-0.12, 1), loc='upper right',frameon=False,fontsize=18)
-        plt.ylim([1.e-4,0.1]) #
-        plt.xlim([1.e10,1.e15])
-        plt.text(1.e11,.05,plot_label)
+            #plt.legend(bbox_to_anchor=(-0.12, 1), loc='upper right',frameon=False,fontsize=18)
+            plt.legend(loc='lower right',frameon=False,fontsize=18)
+        plt.ylim([1.e-4,0.2]) 
+        plt.xlim([2.e11,1.e15])
+        plt.text(3.e11,.05,plot_label)
 
         if k >= 3:
             plt.xlabel(r'$M_{\rm halo}$')
@@ -66,5 +74,5 @@ for i in range(len(type_gals)):
             plt.gca().axes.yaxis.set_ticklabels([])
             plt.gca().axes.yaxis.set_ticks([])
         k += 1
-plt.savefig("figs/SHMR.png") #
-#plt.show()
+plt.savefig("figs/shmr_all.png") #
+plt.show()

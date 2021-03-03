@@ -1,13 +1,17 @@
+import os
+import sys
+
 import matplotlib.pyplot as plt
 import numpy as np
-import sys
 import Corrfunc
 from Corrfunc.theory.DD import DD
 from  mpi4py import MPI
 
 Lbox = 205.
+#Lbox = 75.
 proxy = "m200m"
-opts = ["shuff","partial_env_cw","partial_s2r","partial_vani","partial_tot_pot"]
+#opts = ["shuff","partial_env_cw","partial_s2r","partial_vani","partial_tot_pot"]
+opts = ["norm"]
 n_random = 35#5#35
 
 #ind = int(sys.argv[1])
@@ -15,21 +19,15 @@ ind = MPI.COMM_WORLD.Get_rank()
 opt = opts[ind]
 type_corr = 'cross'#'auto-vv'#'cross'
 
-#ext1 = "data_2dhod_peak"
-ext1 = "data_2dhod_pos"
-#ext2 = "data_2dhod_peak"
-ext2 = "data_2dhod_pos"
-gal_dir = "/home/boryanah/lars/LSSIllustrisTNG/Lensing/"
-test_name = '-'.join(opt.split('_'));print(test_name)
-xyz_dm = np.load(gal_dir+ext1+"/" +"true_gals.npy").astype(np.float)
-xyz_opt_dm = np.load(gal_dir+ext2+"/" +proxy+"_"+opt+"_gals.npy").astype(np.float)
+pos_dir = os.path.expanduser("~/SAM/SAM_TNG_clustering/gm/data_pos/")
+xyz_dm = np.load(pos_dir+"/xyz_gals_hydro_12000_mstar.npy").astype(np.float32)
+xyz_opt_dm = np.load(pos_dir+"/xyz_gals_sam_12000_mstar.npy").astype(np.float32)
 
+void = np.load("data/clean_void_true.npy")
+xyz_void = void[:,1:].astype(np.float32)
 
-void = np.load("data_clean/clean_void_true.npy")
-xyz_void = void[:,1:]
-
-void_opt = np.load("data_clean/clean_void_"+proxy+"_"+opt+".npy")
-xyz_void_opt = void_opt[:,1:]
+void_opt = np.load("data/clean_void_"+opt+".npy")
+xyz_void_opt = void_opt[:,1:].astype(np.float32)
 
 # TESTING
 n_top = 1000
@@ -246,13 +244,13 @@ plt.savefig("cross_"+opt+".png")
 plt.show()
 '''
 
-np.save("data_cross/bin_cents.npy",bin_centers)
-np.save("data_cross/rat_cross_"+opt+"_mean.npy",rat_opt_mean)
-np.save("data_cross/rat_cross_"+opt+"_error.npy",rat_opt_err)
-np.save("data_cross/cross_true_mean.npy",cross_mean)
-np.save("data_cross/cross_true_error.npy",cross_err)
-np.save("data_cross/cross_"+opt+"_mean.npy",cross_opt_mean)
-np.save("data_cross/cross_"+opt+"_error.npy",cross_opt_err)
+np.save("data/bin_cents.npy",bin_centers)
+np.save("data/rat_cross_"+opt+"_mean.npy",rat_opt_mean)
+np.save("data/rat_cross_"+opt+"_error.npy",rat_opt_err)
+np.save("data/cross_true_mean.npy",cross_mean)
+np.save("data/cross_true_error.npy",cross_err)
+np.save("data/cross_"+opt+"_mean.npy",cross_opt_mean)
+np.save("data/cross_"+opt+"_error.npy",cross_opt_err)
 quit()
 #plt.errorbar(bin_centers, cross_mean*bin_centers**2,yerr=cross_err*bin_centers**2,color='b',linewidth=2.,label='true')
 #plt.errorbar(bin_centers, cross_opt_mean*bin_centers**2,yerr=cross_opt_err*bin_centers**2,color='r',linewidth=2.,label='opt')

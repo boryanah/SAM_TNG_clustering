@@ -7,7 +7,17 @@ import illustris_sam as ilsam
 import os
 
 # path where info kept
-basePath = '/mnt/alan1/boryanah/SAM_subvolumes/'
+sim_name = 'TNG300'
+basePath = '/mnt/alan1/boryanah/SAM_subvolumes_'+sim_name+'/'
+
+if sim_name == 'TNG300':
+    n_grid = 7
+    dm = 'DM'
+    fp = 'FP'
+elif sim_name == 'TNG100':
+    n_grid = 5
+    dm = 'FP'
+    fp = 'DM'
 
 # halo and subhalo fields
 fields_halo = ['HalopropC_nfw', 'HalopropMvir', 'HalopropSpin', 'HalopropRedshift']#, 'HalopropIndex_Snapshot']
@@ -38,9 +48,9 @@ subhalo_dic['GalpropHaloIndex_Snapshot'] = 'GalpropHaloIndex'+snap_str
     
 # subvolumes for extracting info
 subvolume_list = []
-for i in range(5):
-    for j in range(5):
-        for k in range(5):
+for i in range(n_grid):
+    for j in range(n_grid):
+        for k in range(n_grid):
             subvolume_list.append([i, j, k])
 
 # load snapshots
@@ -49,8 +59,7 @@ SAM_halos = ilsam.groupcat.load_snapshot_halos(basePath, snap, subvolume_list,fi
 
 # BIG EXCEPTION -- keeping old convention
 field = 'HalopropSubfindID'
-np.save(basePath+field+snap_str+".npy",SAM_subhalos['GalpropSubfindIndex_DM'][SAM_subhalos['GalpropSatType'] == 0])
-quit()
+np.save(basePath+field+snap_str+".npy",SAM_subhalos['GalpropSubfindIndex_'+fp][SAM_subhalos['GalpropSatType'] == 0])
 
 # save rest of the fields
 for field in fields_halo:
@@ -71,14 +80,14 @@ for field in fields_gal:
     np.save(basePath+subhalo_dic[field]+".npy",array)
 
 # bijective matches
-field = 'HalopropFoFIndex_FP'
-np.save(basePath+field+snap_str+".npy",SAM_halos['HalopropFoFIndex_DM'])
-field = 'HalopropFoFIndex_DM'
-np.save(basePath+field+snap_str+".npy",SAM_halos['HalopropFoFIndex_FP'])
-field = 'GalpropSubfindIndex_FP'
-np.save(basePath+field+snap_str+".npy",SAM_subhalos['GalpropSubfindIndex_DM'])
-field = 'GalpropSubfindIndex_DM'
-np.save(basePath+field+snap_str+".npy",SAM_subhalos['GalpropSubfindIndex_FP'])
+field = 'HalopropFoFIndex_'+dm
+np.save(basePath+field+snap_str+".npy",SAM_halos['HalopropFoFIndex_'+fp])
+field = 'HalopropFoFIndex_'+fp
+np.save(basePath+field+snap_str+".npy",SAM_halos['HalopropFoFIndex_'+dm])
+field = 'GalpropSubfindIndex_'+dm
+np.save(basePath+field+snap_str+".npy",SAM_subhalos['GalpropSubfindIndex_'+fp])
+field = 'GalpropSubfindIndex_'+fp
+np.save(basePath+field+snap_str+".npy",SAM_subhalos['GalpropSubfindIndex_'+dm])
 
 
 os.remove(basePath+"HalopropRedshift"+snap_str+".npy")

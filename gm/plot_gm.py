@@ -4,26 +4,23 @@ import plotparams
 #plotparams.default()
 plotparams.buba()
 
-#opts = np.array(['shuff', 'env_mass', 'min_pot', 'partial_vani', 'partial_env_cw', 'partial_tot_pot', 'conc', 'spin'])
-#opts = np.array(['shuff', 'env_mass', 'min_pot', 'partial_vani', 'partial_env_cw', 'partial_tot_pot', 'partial_s2r', 'partial_fenv'])
-opts = np.array(['shuff','partial_env_cw','partial_vani','partial_s2r', 'partial_tot_pot'])
-lab_opts = np.array(['basic HOD','environment','vel. anisotropy',r'$\sigma^2 R_{\rm halfmass}$', 'tot. potential'])
+#opts = np.array(['shuff','partial_env_cw','partial_vani','partial_s2r', 'partial_tot_pot'])
+opts = np.array(['sam'])
+#lab_opts = np.array(['basic HOD','environment','vel. anisotropy',r'$\sigma^2 R_{\rm halfmass}$', 'tot. potential'])
+lab_opts = np.array(['SAM'])
 types = ['bias','corr. coeff.']
 
-bin_centers = np.load("../data_gm/bin_fid.npy")
-bias_fid = np.load("../data_gm/bias_mean_fid.npy")
-corr_coeff_fid = np.load("../data_gm/corr_coeff_mean_fid.npy")
-#bias_fid = np.load("../data_gm/corr_gg_mean_fid.npy")*bin_centers**2
-#bias_error_fid = np.load("../data_gm/corr_gg_error_fid.npy")*bin_centers**2
-
-bias_error_fid = np.load("../data_gm/bias_error_fid.npy")
-corr_coeff_error_fid = np.load("../data_gm/corr_coeff_error_fid.npy")
+bin_centers = np.load("data/bin_cents.npy")
+bias_fid = np.load("data/bias_mean_fid.npy")
+corr_coeff_fid = np.load("data/corr_coeff_mean_fid.npy")
+bias_error_fid = np.load("data/bias_error_fid.npy")
+corr_coeff_error_fid = np.load("data/corr_coeff_error_fid.npy")
 
 nprops = len(opts)
 nrows = 2
 ncols = nprops
 ntot = nrows*ncols
-plt.subplots(nrows,ncols,figsize=(ncols*4.8,nrows*5))
+plt.subplots(nrows,ncols,figsize=(ncols*6,nrows*4.5))
 plot_no = 0
 for i in range(nprops):
     for i_type in range(2):
@@ -34,11 +31,11 @@ for i in range(nprops):
 
             
         if i_type == 0:
-            bias = np.load("../data_gm/bias_mean_"+opt+".npy")
-            bias_error = np.load("../data_gm/bias_error_"+opt+".npy")
+            bias = np.load("data/bias_mean_"+opt+".npy")
+            bias_error = np.load("data/bias_error_"+opt+".npy")
         else:    
-            bias = np.load("../data_gm/corr_coeff_mean_"+opt+".npy")
-            bias_error = np.load("../data_gm/corr_coeff_error_"+opt+".npy")
+            bias = np.load("data/corr_coeff_mean_"+opt+".npy")
+            bias_error = np.load("data/corr_coeff_error_"+opt+".npy")
         
         plot_no = i_type*ncols+i+1
 
@@ -91,14 +88,15 @@ for i in range(nprops):
         plt.xlim([.7,15])
         plt.xscale('log')
 
+        print("plot_no, ncols, ntot = ", plot_no, ncols, ntot)
         if plot_no >= ntot-ncols+1:
             plt.xlabel(r'$r$ [Mpc/h]')
-        if plot_no%ncols == 1 and i_type == 0:
+        if plot_no%ncols == 0 and i_type == 0:
             plt.ylabel(r'$\tilde b (r) = (\xi_{\rm gg}/\xi_{\rm mm})^{1/2}$')
-        elif plot_no%ncols == 1 and i_type == 1:
+        elif plot_no%ncols == 0 and i_type == 1:
             plt.ylabel(r'$\tilde r (r) = \xi_{\rm gm}/(\xi_{\rm gg} \xi_{\rm mm})^{1/2}$')
         else:
             plt.gca().axes.yaxis.set_ticklabels([])
 
-plt.savefig("bias_corr_coeff.pdf")
+plt.savefig("bias_corr_coeff.png")
 plt.show()
