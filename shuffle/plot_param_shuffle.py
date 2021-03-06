@@ -9,7 +9,7 @@ plotparams.buba()
 #secondary_properties = ['env','rvir','conc','conc_desc','vdisp','vdisp_desc','s2r_desc','s2r_asc','spin_desc']
 secondary_properties = ['env','rvir','conc','conc_desc','vdisp','vdiskpeak','mpeak','tform','spin_desc']
 #secondary_properties = ['env','rvir','conc','conc_desc','conc_asc','vdisp','vdisp_desc','spin_asc','spin_desc']
-sec_labels_dict = {'env': r'${\rm env. \ (desc.)}$','rvir': r'$R_{\rm vir} \ {\rm (desc.)}$','conc': r'$c_{\rm NFW} \ {\rm (mix)}$','conc_desc': r'$c_{\rm NFW} \ {\rm (desc.)}$','conc_asc': r'$c_{\rm NFW} \ {\rm (asc.)}$','vdisp': r'$V_{\rm disp} \ {\rm (mix)}$','vdiskpeak': r'$V_{\rm disk, peak} \ {\rm (desc.)}$', 'mpeak': r'$M_{\rm peak}$', 'tform': r'$t_{\rm major}$','spin_desc': r'${\rm spin \ (desc.)}$'}#'s2r_desc': r'$V_{\rm disp}^2 R \ {\rm (desc.)}$','s2r_asc': r'$V_{\rm disp}^2 R \ {\rm (asc.)}$','spin_asc': r'${\rm spin \ (asc.)}$'}
+sec_labels_dict = {'env': r'${\rm env. \ (desc.)}$','rvir': r'$R_{\rm vir} \ {\rm (desc.)}$','conc': r'$c_{\rm NFW} \ {\rm (mix)}$','conc_desc': r'$c_{\rm NFW} \ {\rm (desc.)}$','conc_asc': r'$c_{\rm NFW} \ {\rm (asc.)}$','vdisp': r'$V_{\rm disp} \ {\rm (mix)}$','vdiskpeak': r'$V_{\rm disk, peak} \ {\rm (desc.)}$', 'mpeak': r'$M_{\rm peak}$', 'tform': r'$t_{\rm form}$','spin_desc': r'${\rm spin \ (desc.)}$'}#'s2r_desc': r'$V_{\rm disp}^2 R \ {\rm (desc.)}$','s2r_asc': r'$V_{\rm disp}^2 R \ {\rm (asc.)}$','spin_asc': r'${\rm spin \ (asc.)}$'}
 
 print(sec_labels_dict.items())
 

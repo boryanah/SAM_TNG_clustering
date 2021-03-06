@@ -40,8 +40,13 @@ def main(type_gal, secondary_property, num_gals, want_matching_sam=False, want_m
 
     # if we are selecting centrals only, need some padding so that we end up with num_gals objects
     if want_cents:
-        num_gals *= 2 # padding
+        # padding
+        fac = 3
+        num_gals *= fac
         str_cent = "_cent"
+
+        # TESTING NEWEST 2 this is only if we're doing abundance matching
+        f_sat = 0.25
     else:
         str_cent = ""
 
@@ -85,7 +90,9 @@ def main(type_gal, secondary_property, num_gals, want_matching_sam=False, want_m
     halo_rhalo = np.load(SAM_dir+'GalpropRhalo'+str_snap+'.npy')[sat_type == 0]
     halo_mpeak = np.load(SAM_dir+'HalopropMvir_peak'+str_snap+'.npy')
     #halo_tform = np.load(SAM_dir+'GalpropTsat'+str_snap+'.npy')[sat_type == 0]
-    halo_tform = np.load(SAM_dir+'GalpropTmerger'+str_snap+'.npy')[sat_type == 0]
+    #halo_tform = np.load(SAM_dir+'GalpropTmerger'+str_snap+'.npy')[sat_type == 0]
+    # small z corresponds to large t
+    halo_tform = np.load(SAM_dir+'Halopropz_Mvir_half'+str_snap+'.npy')[::-1]
     halo_vdiskpeak = np.load(SAM_dir+'HalopropVdisk_peak'+str_snap+'.npy')
     halo_spin = np.load(SAM_dir+'HalopropSpin'+str_snap+'.npy')
     halo_sigma_bulge = np.load(SAM_dir+'GalpropSigmaBulge'+str_snap+'.npy')[sat_type == 0]
@@ -126,7 +133,9 @@ def main(type_gal, secondary_property, num_gals, want_matching_sam=False, want_m
     #SubMstar_fp = np.load(hydro_dir+'SubhaloMassInHalfRadType_fp'+str_snap+'.npy')[:,4]*1.e10
     # og
     #SubMstar_fp = np.load(hydro_dir+'SubhaloMassType_fp'+str_snap+'.npy')[:,4]*1.e10
-
+    # TESTING newest
+    GroupNsubs_fp = np.load(hydro_dir+'GroupNsubs_fp'+str_snap+'.npy')
+    GroupFirstSub_fp = np.load(hydro_dir+'GroupFirstSub_fp'+str_snap+'.npy')
 
     # total number of halos
     N_halos_hydro = len(GrMcrit_fp)
@@ -166,7 +175,7 @@ def main(type_gal, secondary_property, num_gals, want_matching_sam=False, want_m
     # --------------------------------------------------------
     #                   MATCH SAM HYDRO
     # --------------------------------------------------------
-
+    
     if want_matching_sam or want_matching_hydro:
         # obtain matching indices for halos
         hydro_matched, sam_matched = get_match(halo_subfind_id, SubGrNr_fp, N_halos_sam)
@@ -198,12 +207,31 @@ def main(type_gal, secondary_property, num_gals, want_matching_sam=False, want_m
         print("minimum halo mass = ",mhalo_low)
 
     if want_cents:
+        # og
+        '''
         inds_gal = np.arange(len(mstar),dtype=int)
         inds_cent = inds_gal[sat_type == 0]
         bool_top_cent = np.in1d(inds_top, inds_cent)
         print("number of centrals = ",np.sum(bool_top_cent))
-        num_gals_sam //= 2
+        num_gals_sam //= fac
         inds_top = (inds_top[bool_top_cent])[:num_gals_sam]
+        '''
+        # TESTING NEWEST 2
+        inds_gal = np.arange(len(mstar), dtype=int)
+        inds_cent = inds_gal[sat_type == 0]
+        inds_sats = inds_gal[sat_type != 0]
+        bool_top_cent = np.in1d(inds_top, inds_cent)
+        bool_top_sats = np.in1d(inds_top, inds_sats)
+        print("number of centrals = ",np.sum(bool_top_cent))
+        print("number of satellites = ",np.sum(bool_top_sats))
+        num_gals_sam //= fac
+        num_sats_sam = int(np.round(f_sat*num_gals_sam))
+        num_cent_sam = num_gals_sam - num_sats_sam
+        inds_top_cent = (inds_top[bool_top_cent])[:num_cent_sam]
+        inds_top_sats = (inds_top[bool_top_sats])[:num_sats_sam]
+        print("number of centrals = ", num_cent_sam)
+        print("number of satellites = ", num_sats_sam)
+        inds_top = np.hstack((inds_top_cent, inds_top_sats))
 
     if want_norm:
         r_choice = halo_rhalo
@@ -254,25 +282,90 @@ def main(type_gal, secondary_property, num_gals, want_matching_sam=False, want_m
         count_nstart_sam = np.vstack((count_sam,nstart_sam)).T
         count_hod, nstart_hod = get_shuff_counts(count_nstart_sam,halo_m_vir,record_relative=record_relative,order_by=halo_prop,order_type=order_type)
 
-    # our halo positions are ordered in terms of stellar mass so simply select the top 6000 -> those are our true positions of the galaxies
-    xyz_true = xyz_position[inds_top]
-    w_true = np.ones(xyz_true.shape[0],dtype=xyz_true.dtype)
-    np.save(os.path.expanduser('~/SAM/SAM_TNG_clustering/gm/data_pos/xyz_gals_sam_'+str(num_gals_hydro)+"_"+type_gal+str_snap+'.npy'), xyz_true)
+    # TESTING newest flags -- saving want tng want_cents (abundance)
+    assert np.sum(count_hod) == len(inds_top), "number of selected galaxies by index and sum of galaxy occupations differs"
+    want_tng_pos = False#True
+    want_save = False#True
+    if want_tng_pos:
+        # create empty array for the galaxy positions
+        xyz_true = np.zeros((len(inds_top), 3), dtype=xyz_position.dtype)
+        w_true = np.ones(xyz_true.shape[0],dtype=xyz_true.dtype)
+        
+        # select halos that have non-zero galaxies and matches
+        non_empty = count_sam[sam_matched] > 0
+
+        # indexing into subhalo array and sam halo occupations
+        nout_matched = GroupNsubs_fp[hydro_matched][non_empty]
+        nstart_matched = GroupFirstSub_fp[hydro_matched][non_empty]
+        count_sam_matched = count_sam[sam_matched][non_empty]
+        nstart_sam_matched = nstart_sam[sam_matched][non_empty]
+
+        # caveat right now only mstar!
+        if type_gal != 'mstar': print("only mstar implemented"); quit()
+        
+        # loop through all halos with galaxies that have matches in TNG
+        sum = 0
+        for i in range(np.sum(non_empty)):
+            nout = nout_matched[i]
+            nst = nstart_matched[i]
+            count = count_sam_matched[i]
+            nstart = nstart_sam_matched[i]
+            subm = SubMstar_fp[nst:nst+nout]
+            subp = SubhaloPos_fp[nst:nst+nout]
+            pos = subp[(np.argsort(subm)[::-1])[:count]]
+            rel_pos_gals_sam[nstart:nstart+count] = pos - SubhaloPos_fp[nst]
+            xyz_true[sum:sum+count] = pos
+            sum += count
+
+        assert sum == np.sum(count_sam_matched), "assigned galaxies different from sum of matched halo occupations"
+
+        # find halos that are non-zero but not in sam_matched
+        inds_halo = np.arange(len(halo_m_vir), dtype=int)
+        sam_unmatched = inds_halo[np.in1d(inds_halo, sam_matched, invert=True)]
+        non_empty = count_sam[sam_unmatched] > 0
+        count_sam_unmatched = count_sam[sam_unmatched][non_empty]
+        nstart_sam_unmatched = nstart_sam[sam_unmatched][non_empty]
+        halo_xyz_position_unmatched = halo_xyz_position[sam_unmatched][non_empty]
+
+        
+        assert np.sum(count_sam_unmatched) + np.sum(count_sam_matched) == len(inds_top), "the unmatched and matched halo occupations don't add up to total galaxy number"
+        
+        
+        # the leftover halos we'll just get from the initially given positions
+        for i in range(np.sum(non_empty)):
+            count = count_sam_unmatched[i]
+            nstart = nstart_sam_unmatched[i]
+            hpos = halo_xyz_position_unmatched[i]
+            rpos = rel_pos_gals_sam[nstart:nstart+count]
+            pos = hpos + rpos
+            xyz_true[sum:sum+count] = pos
+            sum += count
+
+        assert sum == np.sum(count_sam), "final number of galaxies not matching"
+
+    
+    else:
+        # our halo positions are ordered in terms of stellar mass so simply select the top 6000 -> those are our true positions of the galaxies
+        xyz_true = xyz_position[inds_top]
+        w_true = np.ones(xyz_true.shape[0],dtype=xyz_true.dtype)
+
+
+    if want_save:
+        np.save(os.path.expanduser('~/SAM/SAM_TNG_clustering/gm/data_pos/xyz_gals_sam_'+str(num_gals_hydro)+"_"+type_gal+str_snap+'.npy'), xyz_true)
 
     # here we select out of our newly constructed array with counts per halo only those halos which have galaxies and put the galaxies in the center (weights are not all ones)
     #xyz_cents = halo_xyz_position[count_sam>0]
     #w_cents = count_sam[count_sam>0].astype(xyz_cents.dtype)
 
     if want_matching_sam:
-        xyz_hod, w_hod = get_xyz_w(count_hod,nstart_hod,halo_xyz_position[sam_matched],rel_pos_gals_sam,xyz_true.dtype,Lbox)
+        xyz_hod, w_hod = get_xyz_w(count_hod, nstart_hod, halo_xyz_position[sam_matched], rel_pos_gals_sam, xyz_true.dtype, Lbox)
     else:
         # version 1 -- put in center
         # this is the shuffled HOD where again we put the galaxies at the center of the halos
         #xyz_hod = halo_xyz_position[count_hod > 0]
         #w_hod = count_hod[count_hod > 0].astype(xyz_hod.dtype)
         # version 2 -- put relative positions
-
-        xyz_hod, w_hod = get_xyz_w(count_hod,nstart_hod,halo_xyz_position,rel_pos_gals_sam,xyz_true.dtype,Lbox)
+        xyz_hod, w_hod = get_xyz_w(count_hod, nstart_hod, halo_xyz_position, rel_pos_gals_sam, xyz_true.dtype, Lbox)
 
     print("Number of galaxies = ", len(w_hod))
 
@@ -318,12 +411,32 @@ def main(type_gal, secondary_property, num_gals, want_matching_sam=False, want_m
         print(len(inds_top))
 
     if want_cents:
+        # og
+        '''
         unique_hosts, inds_cent = np.unique(SubGrNr_fp,return_index=True)
         bool_top_cent = np.in1d(inds_top, inds_cent)
-        num_gals_hydro //= 2
+        num_gals_hydro //= fac
         inds_top = (inds_top[bool_top_cent])[:num_gals_hydro]
         print("number of centrals = ",np.sum(bool_top_cent))
-
+        '''
+        # TESTING NEWEST 2
+        unique_hosts, inds_cent = np.unique(SubGrNr_fp, return_index=True)
+        # this is not perfect but I guess I am going for efficiency and assuming that the smallest halo would never make the cut which I think is fair; could instead just do np.arange length of subhalos and look for those that are not marked as centrals using np.in1d or something
+        inds_gal = np.arange(len(SubGrNr_fp), dtype=int)
+        inds_sats = inds_gal[np.in1d(inds_gal, inds_cent, invert=True)]
+        bool_top_cent = np.in1d(inds_top, inds_cent)
+        bool_top_sats = np.in1d(inds_top, inds_sats)
+        print("number of centrals = ",np.sum(bool_top_cent))
+        print("number of satellites = ",np.sum(bool_top_sats))
+        num_gals_hydro //= fac
+        num_sats_hydro = int(np.round(f_sat*num_gals_hydro))
+        num_cent_hydro = num_gals_hydro - num_sats_hydro
+        inds_top_cent = (inds_top[bool_top_cent])[:num_cent_hydro]
+        inds_top_sats = (inds_top[bool_top_sats])[:num_sats_hydro]
+        print("number of centrals = ", num_cent_hydro)
+        print("number of satellites = ", num_sats_hydro)
+        inds_top = np.hstack((inds_top_cent, inds_top_sats))
+        
     if want_norm:
         r_choice = GrRcrit_fp
         if want_matching_hydro:
@@ -371,7 +484,9 @@ def main(type_gal, secondary_property, num_gals, want_matching_sam=False, want_m
     # select the galaxies positions and weights
     xyz_true = SubhaloPos_fp[inds_top]
     w_true = np.ones(xyz_true.shape[0],dtype=xyz_true.dtype)
-    np.save(os.path.expanduser('~/SAM/SAM_TNG_clustering/gm/data_pos/xyz_gals_hydro'+str(num_gals_hydro)+"_"+type_gal+str_cent+"_"+secondary_property+str_snap+'.npy'), xyz_true)
+
+    if want_save:
+        np.save(os.path.expanduser('~/SAM/SAM_TNG_clustering/gm/data_pos/xyz_gals_hydro'+str(num_gals_hydro)+"_"+type_gal+str_cent+"_"+secondary_property+str_snap+'.npy'), xyz_true)
     
     # here we select out of our newly constructed array with counts per halo only those halos which have galaxies and put the galaxies in the center
     #xyz_cents = GroupPos_fp[count_fp > 0]

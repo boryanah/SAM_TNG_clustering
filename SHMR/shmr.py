@@ -73,7 +73,9 @@ def main(type_gal, secondary_property, num_gals, want_matching_sam=False, want_m
     halo_rhalo = np.load(SAM_dir+'GalpropRhalo'+str_snap+'.npy')[sat_type == 0]
     halo_mpeak = np.load(SAM_dir+'HalopropMvir_peak'+str_snap+'.npy')
     #halo_tform = np.load(SAM_dir+'GalpropTsat'+str_snap+'.npy')[sat_type == 0]
-    halo_tform = np.load(SAM_dir+'GalpropTmerger'+str_snap+'.npy')[sat_type == 0]
+    #halo_tform = np.load(SAM_dir+'GalpropTmerger'+str_snap+'.npy')[sat_type == 0]
+    # small z corresponds to large t
+    halo_tform = np.load(SAM_dir+'Halopropz_Mvir_half'+str_snap+'.npy')[::-1]
     halo_vdiskpeak = np.load(SAM_dir+'HalopropVdisk_peak'+str_snap+'.npy')
     halo_spin = np.load(SAM_dir+'HalopropSpin'+str_snap+'.npy')
     halo_sigma_bulge = np.load(SAM_dir+'GalpropSigmaBulge'+str_snap+'.npy')[sat_type == 0]
