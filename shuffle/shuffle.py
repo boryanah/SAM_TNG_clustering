@@ -36,18 +36,23 @@ DEFAULTS['num_gals'] = 12000
 DEFAULTS['type_gal'] = "mstar" #"mstar"#"sfr"#"mhalo"
 DEFAULTS['secondary_property'] = 'shuff'
 
-def main(type_gal, secondary_property, num_gals, want_matching_sam=False, want_matching_hydro=False, record_relative=True, want_norm=False, want_cents=False, h=DEFAULTS['h'], snapshot=DEFAULTS['snapshot'], hydro_dir=DEFAULTS['hydro_dir'], SAM_dir=DEFAULTS['SAM_dir'], Lbox=DEFAULTS['Lbox']):
+def main(type_gal, secondary_property, num_gals, snapshot, want_matching_sam=False, want_matching_hydro=False, record_relative=True, want_norm=False, want_cents=False, want_abundance=False, want_tng_pos=False, want_save=False, h=DEFAULTS['h'], hydro_dir=DEFAULTS['hydro_dir'], SAM_dir=DEFAULTS['SAM_dir'], Lbox=DEFAULTS['Lbox']):
 
     # if we are selecting centrals only, need some padding so that we end up with num_gals objects
-    if want_cents:
+    if want_cents or want_abundance:
         # padding
-        fac = 3
+        fac = 8
         num_gals *= fac
-        str_cent = "_cent"
-
-        # TESTING NEWEST 2 this is only if we're doing abundance matching
-        f_sat = 0.25
+        if want_abundance:
+            str_cent = ""#"_abund"
+            if type_gal == 'mstar':
+                f_sat = 0.25
+            elif type_gal == 'sfr':
+                f_sat = 0.33
+        else:
+            str_cent = "_cent"
     else:
+        fac = 1
         str_cent = ""
 
     if snapshot == 99:
@@ -76,7 +81,7 @@ def main(type_gal, secondary_property, num_gals, want_matching_sam=False, want_m
     mhalo = np.load(SAM_dir+'GalpropMhalo'+str_snap+'.npy')
     mstar = np.load(SAM_dir+'GalpropMstar'+str_snap+'.npy')
     sfr = np.load(SAM_dir+'GalpropSfr'+str_snap+'.npy')
-    sfr /= mstar
+    #sfr /= mstar
     #sfr = np.load(SAM_dir+'GalpropSfrave100myr'+str_snap+'.npy')
     sat_type = np.load(SAM_dir+'GalpropSatType'+str_snap+'.npy')
 
@@ -84,22 +89,29 @@ def main(type_gal, secondary_property, num_gals, want_matching_sam=False, want_m
     xyz_position[xyz_position > Lbox] -= Lbox
     xyz_position[xyz_position < 0.] += Lbox 
 
+
     # halo arrays
     halo_m_vir = np.load(SAM_dir+'HalopropMvir'+str_snap+'.npy')
     halo_c_nfw = np.load(SAM_dir+'HalopropC_nfw'+str_snap+'.npy')
+
+    
     halo_rhalo = np.load(SAM_dir+'GalpropRhalo'+str_snap+'.npy')[sat_type == 0]
+    # b.h. probs most are missing
     halo_mpeak = np.load(SAM_dir+'HalopropMvir_peak'+str_snap+'.npy')
     #halo_tform = np.load(SAM_dir+'GalpropTsat'+str_snap+'.npy')[sat_type == 0]
     #halo_tform = np.load(SAM_dir+'GalpropTmerger'+str_snap+'.npy')[sat_type == 0]
     # small z corresponds to large t
-    halo_tform = np.load(SAM_dir+'Halopropz_Mvir_half'+str_snap+'.npy')[::-1]
+    halo_tform = np.load(SAM_dir+'Halopropz_Mvir_half'+str_snap+'.npy')
     halo_vdiskpeak = np.load(SAM_dir+'HalopropVdisk_peak'+str_snap+'.npy')
     halo_spin = np.load(SAM_dir+'HalopropSpin'+str_snap+'.npy')
     halo_sigma_bulge = np.load(SAM_dir+'GalpropSigmaBulge'+str_snap+'.npy')[sat_type == 0]
 
+    
     if want_matching_sam or want_matching_hydro:
         # load the matches with hydro
-        halo_subfind_id = np.load(SAM_dir+'HalopropSubfindID'+str_snap+'.npy')
+        #halo_subfind_id = np.load(SAM_dir+'HalopropSubfindID'+str_snap+'.npy')
+        # TESTING!!!!!!!!!!!!!! problem at snap = 55
+        halo_subfind_id = np.load(SAM_dir+'GalpropSubfindIndex_FP'+str_snap+'.npy')[sat_type==0]
 
     N_halos_sam = len(halo_m_vir)
 
@@ -114,6 +126,11 @@ def main(type_gal, secondary_property, num_gals, want_matching_sam=False, want_m
     halo_ijk = (halo_xyz_position/gr_size).astype(int)
     halo_environment = density[halo_ijk[:,0],halo_ijk[:,1],halo_ijk[:,2]]
 
+    # TESTING!!!!!!!!!!!!!! problem at snap = 55
+    halo_m_vir = mhalo[sat_type == 0]
+    
+    #np.save(SAM_dir+'HalopropEnvironment'+str_snap+'.npy', halo_environment)
+
     ##########################################
     #####               HYDRO            ##### 
     ##########################################
@@ -121,19 +138,19 @@ def main(type_gal, secondary_property, num_gals, want_matching_sam=False, want_m
     # Loading data for the hydro -- you can skip for now
     SubGrNr_fp = np.load(hydro_dir+'SubhaloGrNr_fp'+str_snap+'.npy')
     #GrMcrit_fp = np.load(hydro_dir+'Group_M_Crit200_fp'+str_snap+'.npy')*1.e10
+    #GrMcrit_fp = np.load(hydro_dir+'Group_M_Mean200_fp'+str_snap+'.npy')*1.e10
     GrMcrit_fp = np.load(hydro_dir+'Group_M_TopHat200_fp'+str_snap+'.npy')*1.e10
     GroupPos_fp = np.load(hydro_dir+'GroupPos_fp'+str_snap+'.npy')/1000.
     SubhaloPos_fp = np.load(hydro_dir+'SubhaloPos_fp'+str_snap+'.npy')/1000.
-    # might be best
+
+    
+    # stellar mass and SFR
     SubMstar_fp = np.load(hydro_dir+'SubhaloMassInHalfRadType_fp'+str_snap+'.npy')[:,4]*1.e10
     #SubMstar_fp = np.load(hydro_dir+'SubhaloMassType_fp'+str_snap+'.npy')[:,4]*1.e10
     SubhaloSFR_fp = np.load(hydro_dir+'SubhaloSFR_fp'+str_snap+'.npy')
-    SubhaloSFR_fp /= SubMstar_fp
-    # TESTING
-    #SubMstar_fp = np.load(hydro_dir+'SubhaloMassInHalfRadType_fp'+str_snap+'.npy')[:,4]*1.e10
-    # og
-    #SubMstar_fp = np.load(hydro_dir+'SubhaloMassType_fp'+str_snap+'.npy')[:,4]*1.e10
-    # TESTING newest
+    #SubhaloSFR_fp /= SubMstar_fp
+    
+    # loading number of subhalos perhalo and npstarts
     GroupNsubs_fp = np.load(hydro_dir+'GroupNsubs_fp'+str_snap+'.npy')
     GroupFirstSub_fp = np.load(hydro_dir+'GroupFirstSub_fp'+str_snap+'.npy')
 
@@ -144,13 +161,14 @@ def main(type_gal, secondary_property, num_gals, want_matching_sam=False, want_m
     halo_ijk = (GroupPos_fp/gr_size).astype(int)%n_gr
     GroupEnv_fp = density[halo_ijk[:,0],halo_ijk[:,1],halo_ijk[:,2]]
 
-    #GrRcrit_fp = np.load(hydro_dir+'Group_R_Crit200_fp'+str_snap+'.npy')/1000.
     GrRcrit_fp = np.load(hydro_dir+'Group_R_TopHat200_fp'+str_snap+'.npy')/1000.
+    #GrRcrit_fp = np.load(hydro_dir+'Group_R_Crit200_fp'+str_snap+'.npy')/1000.
+    #GrRcrit_fp = np.load(hydro_dir+'Group_R_Mean200_fp'+str_snap+'.npy')/1000
     Group_Vmax_fp = np.load(hydro_dir+'Group_Vmax_fp'+str_snap+'.npy')/1000.
-    #Group_R_Mean200_fp = np.load(hydro_dir+'Group_R_Mean200_fp'+str_snap+'.npy')/1000
     #Group_V_Crit200_fp = np.load(hydro_dir+'Group_V_Crit200_fp'+str_snap+'.npy')/1000
     Group_V_Crit200_fp = np.load(hydro_dir+'Group_V_TopHat200_fp'+str_snap+'.npy')/1000
-    SubhaloSpin_fp = np.sqrt(np.sum(np.load(hydro_dir+'SubhaloSpin_fp'+str_snap+'.npy')**2,axis=1))
+    GroupSpin_fp = np.load(hydro_dir+'GroupSpin_fp'+str_snap+'.npy')
+    #SubhaloSpin_fp = np.sqrt(np.sum(np.load(hydro_dir+'SubhaloSpin_fp'+str_snap+'.npy')**2,axis=1))
     SubhaloVelDisp_fp = np.load(hydro_dir+'SubhaloVelDisp_fp'+str_snap+'.npy')
     SubhaloHalfmassRad_fp = np.load(hydro_dir+'SubhaloHalfmassRad_fp'+str_snap+'.npy')
 
@@ -166,8 +184,8 @@ def main(type_gal, secondary_property, num_gals, want_matching_sam=False, want_m
     elif secondary_property == 'vdisp': halo_prop = halo_sigma_bulge; group_prop = get_from_sub_prop(SubhaloVelDisp_fp,SubGrNr_fp,N_halos_hydro); order_type = 'mixed'; sec_label = r'${\rm vel. \ disp. \ (mixed)}$'
     elif secondary_property == 'vdisp_desc': halo_prop = halo_sigma_bulge; group_prop = get_from_sub_prop(SubhaloVelDisp_fp,SubGrNr_fp,N_halos_hydro); order_type = 'desc'; sec_label = r'${\rm vel. \ disp. \ (descending)}$'
     elif secondary_property == 'vdisp_asc': halo_prop = halo_sigma_bulge; group_prop = get_from_sub_prop(SubhaloVelDisp_fp,SubGrNr_fp,N_halos_hydro); order_type = 'asc'; sec_label = r'${\rm vel. \ disp. \ (ascending)}$'
-    elif secondary_property == 'spin_asc': halo_prop = halo_spin; group_prop = get_from_sub_prop(SubhaloSpin_fp,SubGrNr_fp,N_halos_hydro); order_type = 'asc'; sec_label = r'${\rm spin \ (descending)}$'
-    elif secondary_property == 'spin_desc': halo_prop = halo_spin; group_prop = get_from_sub_prop(SubhaloSpin_fp,SubGrNr_fp,N_halos_hydro); order_type = 'desc'; sec_label = r'${\rm spin \ (descending)}$'
+    elif secondary_property == 'spin_asc': halo_prop = halo_spin; group_prop = GroupSpin_fp; order_type = 'asc'; sec_label = r'${\rm spin \ (descending)}$'
+    elif secondary_property == 'spin_desc': halo_prop = halo_spin; group_prop = GroupSpin_fp; order_type = 'desc'; sec_label = r'${\rm spin \ (descending)}$'
     elif secondary_property == 's2r_asc': halo_prop = halo_sigma_bulge**2*halo_rhalo; group_prop = get_from_sub_prop(SubhaloVelDisp_fp**2*SubhaloHalfmassRad_fp,SubGrNr_fp,N_halos_hydro); order_type = 'asc'; sec_label = r'${\rm spin \ (descending)}$'
     elif secondary_property == 's2r_desc': halo_prop = halo_sigma_bulge**2*halo_rhalo; group_prop = get_from_sub_prop(SubhaloVelDisp_fp**2*SubhaloHalfmassRad_fp,SubGrNr_fp,N_halos_hydro); order_type = 'desc'; sec_label = r'${\rm spin \ (descending)}$'
 
@@ -207,16 +225,16 @@ def main(type_gal, secondary_property, num_gals, want_matching_sam=False, want_m
         print("minimum halo mass = ",mhalo_low)
 
     if want_cents:
-        # og
-        '''
+        # selecting centrals
         inds_gal = np.arange(len(mstar),dtype=int)
         inds_cent = inds_gal[sat_type == 0]
         bool_top_cent = np.in1d(inds_top, inds_cent)
         print("number of centrals = ",np.sum(bool_top_cent))
         num_gals_sam //= fac
         inds_top = (inds_top[bool_top_cent])[:num_gals_sam]
-        '''
-        # TESTING NEWEST 2
+        
+    if want_abundance:
+        # selecting centrals and satellites
         inds_gal = np.arange(len(mstar), dtype=int)
         inds_cent = inds_gal[sat_type == 0]
         inds_sats = inds_gal[sat_type != 0]
@@ -240,10 +258,6 @@ def main(type_gal, secondary_property, num_gals, want_matching_sam=False, want_m
     else:
         r_choice = None
 
-    if want_matching_sam:
-        hmf_sam, bin_hmf = get_hmf(halo_m_vir[sam_matched])
-    else:
-        hmf_sam, bin_hmf = get_hmf(halo_m_vir)
         
     if want_matching_sam:
         inds_top_matched, inds_halo_host_comm1_matched, inds_halo_host_matched = match_subs(inds_top, hosthaloid, sam_matched, sam_matched)
@@ -282,10 +296,10 @@ def main(type_gal, secondary_property, num_gals, want_matching_sam=False, want_m
         count_nstart_sam = np.vstack((count_sam,nstart_sam)).T
         count_hod, nstart_hod = get_shuff_counts(count_nstart_sam,halo_m_vir,record_relative=record_relative,order_by=halo_prop,order_type=order_type)
 
-    # TESTING newest flags -- saving want tng want_cents (abundance)
+    # sanity check
     assert np.sum(count_hod) == len(inds_top), "number of selected galaxies by index and sum of galaxy occupations differs"
-    want_tng_pos = False#True
-    want_save = False#True
+
+    # this is to translate the TNG subhalo positions into SAM galaxy positions
     if want_tng_pos:
         # create empty array for the galaxy positions
         xyz_true = np.zeros((len(inds_top), 3), dtype=xyz_position.dtype)
@@ -343,20 +357,24 @@ def main(type_gal, secondary_property, num_gals, want_matching_sam=False, want_m
 
         assert sum == np.sum(count_sam), "final number of galaxies not matching"
 
-    
+    # in case we won't the natural SAM positions
     else:
         # our halo positions are ordered in terms of stellar mass so simply select the top 6000 -> those are our true positions of the galaxies
         xyz_true = xyz_position[inds_top]
         w_true = np.ones(xyz_true.shape[0],dtype=xyz_true.dtype)
 
-
+    # save the galaxy positions
     if want_save:
-        np.save(os.path.expanduser('~/SAM/SAM_TNG_clustering/gm/data_pos/xyz_gals_sam_'+str(num_gals_hydro)+"_"+type_gal+str_snap+'.npy'), xyz_true)
+        np.save(os.path.expanduser('~/SAM/SAM_TNG_clustering/gm/data_pos/xyz_gals_sam_'+str(int(num_gals_hydro/fac))+"_"+type_gal+str_snap+'.npy'), xyz_true)
+        if want_abundance:
+            np.save(os.path.expanduser('~/SAM/SAM_TNG_clustering/gm/data_pos/xyz_cent_sam_'+str(int(num_gals_hydro/fac))+"_"+type_gal+str_snap+'.npy'), xyz_position[inds_top_cent])
+            np.save(os.path.expanduser('~/SAM/SAM_TNG_clustering/gm/data_pos/xyz_sats_sam_'+str(int(num_gals_hydro/fac))+"_"+type_gal+str_snap+'.npy'), xyz_position[inds_top_sats])
 
-    # here we select out of our newly constructed array with counts per halo only those halos which have galaxies and put the galaxies in the center (weights are not all ones)
+        
+    # select only those halos which have galaxies and put the galaxies in the center (weights are not all ones)
     #xyz_cents = halo_xyz_position[count_sam>0]
     #w_cents = count_sam[count_sam>0].astype(xyz_cents.dtype)
-
+    
     if want_matching_sam:
         xyz_hod, w_hod = get_xyz_w(count_hod, nstart_hod, halo_xyz_position[sam_matched], rel_pos_gals_sam, xyz_true.dtype, Lbox)
     else:
@@ -369,27 +387,19 @@ def main(type_gal, secondary_property, num_gals, want_matching_sam=False, want_m
 
     print("Number of galaxies = ", len(w_hod))
 
-    # Correlation function ratios for the SAM
-
-    '''
-    # compute the ratio of the corr func of the constructed HOD to the true SAM with error bars and plot it
-    Rat_hodtrue_mean, Rat_hodtrue_err, Corr_mean_hod, Corr_err_hod,  Corr_mean_true, Corr_err_true, bin_centers = get_jack_corr(xyz_true,w_true,xyz_cents,w_cents,Lbox)
-    plt.errorbar(bin_centers,Rat_hodtrue_mean,yerr=Rat_hodtrue_err,color='dodgerblue',ls='--',label='SAM: halo cents/true',alpha=1.,fmt='o',capsize=4)
-    '''
-
     # compute the ratio of the shuffled galaxies to the true SAM with error bars and plot it
     Rat_hodtrue_mean_sam, Rat_hodtrue_err_sam, Corr_mean_hod_sam, Corr_err_hod_sam,  Corr_mean_true_sam, Corr_err_true_sam, bin_centers = get_jack_corr(xyz_true,w_true,xyz_hod,w_hod,Lbox)
 
     plt.figure(1,figsize=(8,7))
-
     line = np.linspace(0,40,3)
     plt.plot(line,np.ones(len(line)),'k--')
-
     plt.errorbar(bin_centers,Rat_hodtrue_mean_sam,yerr=Rat_hodtrue_err_sam,color='dodgerblue',ls='-',label='SAM',alpha=1.,fmt='o',capsize=4)
 
+    # save the mean and error of the ratio of the correlation functions
     np.save("data/rat_mean_sam_"+str(num_gals_sam)+"_"+type_gal+str_cent+"_"+secondary_property+str_snap+'.npy',Rat_hodtrue_mean_sam)
     np.save("data/rat_err_sam_"+str(num_gals_sam)+"_"+type_gal+str_cent+"_"+secondary_property+str_snap+'.npy',Rat_hodtrue_err_sam)
 
+    # save the mean and error of the correlation function
     np.save("data/mean_sam.npy", Corr_mean_true_sam)
     np.save("data/err_sam.npy", Corr_err_true_sam)
     
@@ -411,17 +421,16 @@ def main(type_gal, secondary_property, num_gals, want_matching_sam=False, want_m
         print(len(inds_top))
 
     if want_cents:
-        # og
-        '''
+        # selecting centrals
         unique_hosts, inds_cent = np.unique(SubGrNr_fp,return_index=True)
         bool_top_cent = np.in1d(inds_top, inds_cent)
         num_gals_hydro //= fac
         inds_top = (inds_top[bool_top_cent])[:num_gals_hydro]
         print("number of centrals = ",np.sum(bool_top_cent))
-        '''
-        # TESTING NEWEST 2
+
+    if want_abundance:
+        # selecting centrals and satellites
         unique_hosts, inds_cent = np.unique(SubGrNr_fp, return_index=True)
-        # this is not perfect but I guess I am going for efficiency and assuming that the smallest halo would never make the cut which I think is fair; could instead just do np.arange length of subhalos and look for those that are not marked as centrals using np.in1d or something
         inds_gal = np.arange(len(SubGrNr_fp), dtype=int)
         inds_sats = inds_gal[np.in1d(inds_gal, inds_cent, invert=True)]
         bool_top_cent = np.in1d(inds_top, inds_cent)
@@ -436,18 +445,14 @@ def main(type_gal, secondary_property, num_gals, want_matching_sam=False, want_m
         print("number of centrals = ", num_cent_hydro)
         print("number of satellites = ", num_sats_hydro)
         inds_top = np.hstack((inds_top_cent, inds_top_sats))
-        
+
+    # normalize the relative galaxy positions by the halo radius
     if want_norm:
         r_choice = GrRcrit_fp
         if want_matching_hydro:
             r_choice = halo_rhalo[sam_matched]
     else:
         r_choice = None
-
-    if want_matching_hydro:
-        hmf_fp, bin_hmf = get_hmf(halo_m_vir[sam_matched])
-    else:
-        hmf_fp, bin_hmf = get_hmf(GrMcrit_fp)
         
     if want_matching_hydro:
         # limit to only matched
@@ -486,7 +491,10 @@ def main(type_gal, secondary_property, num_gals, want_matching_sam=False, want_m
     w_true = np.ones(xyz_true.shape[0],dtype=xyz_true.dtype)
 
     if want_save:
-        np.save(os.path.expanduser('~/SAM/SAM_TNG_clustering/gm/data_pos/xyz_gals_hydro'+str(num_gals_hydro)+"_"+type_gal+str_cent+"_"+secondary_property+str_snap+'.npy'), xyz_true)
+        np.save(os.path.expanduser('~/SAM/SAM_TNG_clustering/gm/data_pos/xyz_gals_hydro_'+str(num_gals_hydro)+"_"+type_gal+str_snap+'.npy'), xyz_true)
+        if want_abundance:
+            np.save(os.path.expanduser('~/SAM/SAM_TNG_clustering/gm/data_pos/xyz_cent_hydro_'+str(num_gals_hydro)+"_"+type_gal+str_snap+'.npy'), SubhaloPos_fp[inds_top_cent])
+            np.save(os.path.expanduser('~/SAM/SAM_TNG_clustering/gm/data_pos/xyz_sats_hydro_'+str(num_gals_hydro)+"_"+type_gal+str_snap+'.npy'), SubhaloPos_fp[inds_top_sats])
     
     # here we select out of our newly constructed array with counts per halo only those halos which have galaxies and put the galaxies in the center
     #xyz_cents = GroupPos_fp[count_fp > 0]
@@ -504,36 +512,46 @@ def main(type_gal, secondary_property, num_gals, want_matching_sam=False, want_m
         xyz_hod, w_hod = get_xyz_w(count_hod_fp,nstart_hod_fp,GroupPos_fp,rel_pos_gals_fp,xyz_true.dtype,Lbox)
 
     print("Number of galaxies = ", len(w_hod))
-        
-    # Correlation function ratios for the hydro
-    
-    '''
-    # compute the ratio of the corr func of the constructed HOD to the true hydro with error bars and plot it
-    Rat_hodtrue_mean, Rat_hodtrue_err, Corr_mean_hod, Corr_err_hod,  Corr_mean_true, Corr_err_true, bin_centers = get_jack_corr(xyz_true,w_true,xyz_cents,w_cents,Lbox)
-    plt.errorbar(bin_centers,Rat_hodtrue_mean,yerr=Rat_hodtrue_err,color='orange',ls='--',label='Hydro: halo cents/true',alpha=1.,fmt='o',capsize=4)
-    '''
 
     # compute the ratio of the shuffled galaxies to the true hydro with error bars and plot it
     Rat_hodtrue_mean_hydro, Rat_hodtrue_err_hydro, Corr_mean_hod_hydro, Corr_err_hod_hydro,  Corr_mean_true_hydro, Corr_err_true_hydro, bin_centers = get_jack_corr(xyz_true,w_true,xyz_hod,w_hod,Lbox)
 
-    plt.figure(1,figsize=(8,7))
-
-    # TESTING
-    #Rat_hodtrue_mean_hydro = Corr_mean_hod_sam/Corr_mean_hod_hydro
-    
+    # plot the ratio
+    plt.figure(1,figsize=(8,7))    
     plt.errorbar(bin_centers*1.05,Rat_hodtrue_mean_hydro,yerr=Rat_hodtrue_err_hydro,color='orange',ls='-',label='Hydro',alpha=1.,fmt='o',capsize=4)
 
+    # save the mean and error of the ratio of the correlation functions
     np.save("data/rat_mean_hydro_"+str(num_gals_hydro)+"_"+type_gal+str_cent+"_"+secondary_property+str_snap+'.npy',Rat_hodtrue_mean_hydro)
     np.save("data/rat_err_hydro_"+str(num_gals_hydro)+"_"+type_gal+str_cent+"_"+secondary_property+str_snap+'.npy',Rat_hodtrue_err_hydro)
 
+    # save the mean and error of the correlation function
     np.save("data/mean_hydro.npy", Corr_mean_true_hydro)
     np.save("data/err_hydro.npy", Corr_err_true_hydro)
-    np.save("data/rel_pos_gals_sam.npy", rel_pos_gals_sam)
-    np.save("data/rel_pos_gals_fp.npy", rel_pos_gals_fp)
-    np.save("data/bin_centers.npy",bin_centers)
-    np.save("data/bin_hmf.npy", bin_hmf)
-    np.save("data/hmf_fp.npy", hmf_fp)
-    np.save("data/hmf_sam.npy", hmf_sam)
+
+    # save the relative positions of the galaxies with respect to the halo centers
+    want_save_rel = False
+    if want_save_rel:
+        np.save("data/rel_pos_gals_norm_sam.npy", rel_pos_gals_sam)
+        np.save("data/rel_pos_gals_norm_fp.npy", rel_pos_gals_fp)
+        np.save("data/bin_centers.npy",bin_centers)
+
+    # save the HMF of fp, dm and sam
+    want_save_hmf = False
+    if want_save_hmf:
+        if want_matching_sam:
+            hmf_sam, bin_hmf = get_hmf(halo_m_vir[sam_matched])
+        else:
+            hmf_sam, bin_hmf = get_hmf(halo_m_vir)
+        if want_matching_hydro:
+            hmf_fp, bin_hmf = get_hmf(halo_m_vir[sam_matched])
+        else:
+            hmf_fp, bin_hmf = get_hmf(GrMcrit_fp)
+        
+        hmf_dm, bin_hmf = get_hmf(GrMcrit_dm)
+        np.save("data/hmf_dm.npy", hmf_dm)
+        np.save("data/bin_hmf.npy", bin_hmf)
+        np.save("data/hmf_fp.npy", hmf_fp)
+        np.save("data/hmf_sam.npy", hmf_sam)
     
     plt.xlabel(r'$r [{\rm Mpc}/h]$')
     plt.ylabel(r'$\xi(r)_{\rm HOD}/\xi(r)_{\rm TNG300}$')
@@ -553,9 +571,13 @@ if __name__ == '__main__':
     parser.add_argument('--type_gal', help='Galaxy type', default=DEFAULTS['type_gal'])
     parser.add_argument('--secondary_property', help='Secondary property', default=DEFAULTS['secondary_property'])
     parser.add_argument('--num_gals', help='Number of galaxies', type=int, default=DEFAULTS['num_gals'])
+    parser.add_argument('--snapshot', help='Simulation snapshot', type=int, default=DEFAULTS['snapshot'])
     parser.add_argument('--want_matching_sam', help='Match SAM?', action='store_true')
     parser.add_argument('--want_matching_hydro', help='Match Hydro?', action='store_true')
     parser.add_argument('--want_cents', help='Work with centrals only?', action='store_true')
+    parser.add_argument('--want_abundance', help='Work with centrals and satellites', action='store_true')
+    parser.add_argument('--want_save', help='Save the position of the galaxies', action='store_true')
+    parser.add_argument('--want_tng_pos', help='Use the positions of the TNG subhalos', action='store_true')
     parser.add_argument('--want_norm', help='Normalize the relative positions', action='store_true')
     args = parser.parse_args()
     args = vars(args)

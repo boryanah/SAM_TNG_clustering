@@ -54,7 +54,8 @@ print("N halos", N_halos_sam)
 unique_hosts, inds_halo = np.unique(hosthaloid, return_index=True)
 sat_type = np.ones(N_subhalos_sam, dtype=int)
 sat_type[inds_halo] = 0
-# TESTING this array not working
+np.save(sam_dir+'GalpropSatType'+snap_str+'.npy', sat_type)
+# TESTING this array not working for snap = 55 (weird!!! have asked Austen... three times)
 #sat_type = np.load(sam_dir+'GalpropSatType'+snap_str+'.npy')
 halo_pos = pos[sat_type==0]
 
@@ -71,13 +72,13 @@ GrMcrit_dm = np.load(hydro_dir+'Group_M_'+mass_type+'200_dm'+snap_str+'.npy')*1.
 GroupPos_fp = np.load(hydro_dir+'GroupPos_fp'+snap_str+'.npy')/1.e3
 GroupPos_dm = np.load(hydro_dir+'GroupPos_dm'+snap_str+'.npy')/1.e3
 
-# indices swapped in the TNG100 data
+# !!!!!!!!!!!!!!!!!!!!!!!! indices FP and DM swapped in the TNG100 data
 FP_label = 'FP'
 DM_label = 'DM'
 
 # those two should be equivalent
 halo_subfind_id = np.load(sam_dir+'GalpropSubfindIndex_'+FP_label+snap_str+'.npy')[sat_type==0]
-# WHAT IS HAPPENING HERE
+# TESTING WHAT IS HAPPENING HERE WITH SNAPSHOT 55??? (use the above)
 halo_subfind_id2 = np.load(sam_dir+'HalopropSubfindID'+snap_str+'.npy')
 #print("this should be 0 = ", (halo_subfind_id-halo_subfind_id2).sum())
 

@@ -14,6 +14,8 @@ type_gals = ['mstar','mstar_cent']
 
 type_dict = {'mstar': 'M_\\ast$-${\\rm selected', 'mstar_cent': 'M_\\ast$-${\\rm selected', 'mhalo': 'M_{\rm halo}$-${\rm selected', 'sfr': '{\rm SFR}$-${\rm selected', 'sfr_cent': '{\rm SFR}$-${\rm selected \ centrals'}
 
+snap_str = ''
+#snap_str = '_55'
 
 line = np.linspace(0,40,3)
 
@@ -42,10 +44,10 @@ for i in range(len(type_gals)):
             objs = 'gals.'
         plot_label = r'$ %s, \ %d \ %s}$'%(type_str,num_gal,objs)
 
-        rat_mean_sam = np.load("data/rat_mean_sam_"+str(num_gal)+"_"+type_gal+"_shuff.npy")
-        rat_err_sam = np.load("data/rat_err_sam_"+str(num_gal)+"_"+type_gal+"_shuff.npy")
-        rat_mean_hydro = np.load("data/rat_mean_hydro_"+str(num_gal)+"_"+type_gal+"_shuff.npy")
-        rat_err_hydro = np.load("data/rat_err_hydro_"+str(num_gal)+"_"+type_gal+"_shuff.npy")
+        rat_mean_sam = np.load("data/rat_mean_sam_"+str(num_gal)+"_"+type_gal+"_shuff"+snap_str+".npy")
+        rat_err_sam = np.load("data/rat_err_sam_"+str(num_gal)+"_"+type_gal+"_shuff"+snap_str+".npy")
+        rat_mean_hydro = np.load("data/rat_mean_hydro_"+str(num_gal)+"_"+type_gal+"_shuff"+snap_str+".npy")
+        rat_err_hydro = np.load("data/rat_err_hydro_"+str(num_gal)+"_"+type_gal+"_shuff"+snap_str+".npy")
 
         plt.plot(line,np.ones(len(line)),'k--')
 
@@ -76,5 +78,5 @@ for i in range(len(type_gals)):
             plt.gca().axes.yaxis.set_ticklabels([])
             plt.gca().axes.yaxis.set_ticks([])
         k += 1
-plt.savefig("figs/shuffle_all.png")
+plt.savefig("figs/shuffle_all"+snap_str+".png")
 plt.show()

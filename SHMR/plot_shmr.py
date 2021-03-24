@@ -8,8 +8,8 @@ plotparams.buba()
 
 #num_gals = [1200,6000,12000]
 num_gals = [6000, 12000, 24000]
-#type_gals = ['mstar','sfr']
-type_gals = ['mstar','mhalo']
+type_gals = ['mstar','sfr']
+#type_gals = ['mstar','mhalo']
 #type_gals = ['mstar','sfr']
 
 type_dict = {'mstar': 'M_\\ast$-${\\rm selected', 'mstar_cent': 'M_\ast$-${\\rm selected \ centrals', 'mhalo': 'M_{\\rm halo}$-${\\rm selected', 'sfr': '{\\rm SFR}$-${\\rm selected', 'sfr_cent': '{\\rm SFR}$-${\\rm selected \ centrals'}
@@ -17,6 +17,9 @@ type_dict = {'mstar': 'M_\\ast$-${\\rm selected', 'mstar_cent': 'M_\ast$-${\\rm 
 line = np.linspace(0,40,3)
 
 bin_cents = np.load("data/bin_cents.npy")
+
+snap_str = '_55'
+#snap_str = ''
 
 # maybe load average
 
@@ -43,8 +46,8 @@ for i in range(len(type_gals)):
         plot_label = r'$%s, \ %d \ %s}$'%(type_str,num_gal,objs)
         #plt.title(plot_label), fontsize=23, y=0.995)
 
-        shmr_sam = np.load("data/shmr_sam_"+str(num_gal)+"_"+type_gal+".npy")#
-        shmr_hydro = np.load("data/shmr_hydro_"+str(num_gal)+"_"+type_gal+".npy")#
+        shmr_sam = np.load("data/shmr_sam_"+str(num_gal)+"_"+type_gal+snap_str+".npy")#
+        shmr_hydro = np.load("data/shmr_hydro_"+str(num_gal)+"_"+type_gal+snap_str+".npy")#
 
         plt.plot(line,np.ones(len(line)),'k--')
 
@@ -74,5 +77,5 @@ for i in range(len(type_gals)):
             plt.gca().axes.yaxis.set_ticklabels([])
             plt.gca().axes.yaxis.set_ticks([])
         k += 1
-plt.savefig("figs/shmr_all.png") #
+plt.savefig("figs/shmr_all"+snap_str+".png") #
 plt.show()

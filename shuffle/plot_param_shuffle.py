@@ -25,15 +25,17 @@ type_gal = 'mstar'#'mstar_cent'#'mhalo' #'mstar'#'sfr'
 
 type_dict = {'mstar': 'Mass-selected', 'sfr': 'SFR-selected', 'mstar_cent': 'Mass-selected centrals', 'mhalo': 'HaloMass-selected',}
 type_str = type_dict[type_gal]
+#snap_str = '_55'
+snap_str = ''
 
 bin_centers = np.load("data/bin_centers.npy")
 
 
-rat_mean_shuff_sam = np.load("data/rat_mean_sam_"+str(num_gals)+"_"+type_gal+"_shuff.npy")
-rat_err_shuff_sam = np.load("data/rat_err_sam_"+str(num_gals)+"_"+type_gal+"_shuff.npy")
+rat_mean_shuff_sam = np.load("data/rat_mean_sam_"+str(num_gals)+"_"+type_gal+"_shuff"+snap_str+".npy")
+rat_err_shuff_sam = np.load("data/rat_err_sam_"+str(num_gals)+"_"+type_gal+"_shuff"+snap_str+".npy")
 
-rat_mean_shuff_hydro = np.load("data/rat_mean_hydro_"+str(num_gals)+"_"+type_gal+"_shuff.npy")
-rat_err_shuff_hydro = np.load("data/rat_err_hydro_"+str(num_gals)+"_"+type_gal+"_shuff.npy")
+rat_mean_shuff_hydro = np.load("data/rat_mean_hydro_"+str(num_gals)+"_"+type_gal+"_shuff"+snap_str+".npy")
+rat_err_shuff_hydro = np.load("data/rat_err_hydro_"+str(num_gals)+"_"+type_gal+"_shuff"+snap_str+".npy")
 
 
 fig, axes = plt.subplots(3,3,figsize=(18,12))
@@ -47,11 +49,11 @@ for i in range(n_sec):
     secondary_property = secondary_properties[i]
     sec_label = sec_labels[i]
     
-    rat_mean_sam = np.load("data/rat_mean_sam_"+str(num_gals)+"_"+type_gal+"_"+secondary_property+".npy")
-    rat_err_sam = np.load("data/rat_err_sam_"+str(num_gals)+"_"+type_gal+"_"+secondary_property+".npy")
+    rat_mean_sam = np.load("data/rat_mean_sam_"+str(num_gals)+"_"+type_gal+"_"+secondary_property+""+snap_str+".npy")
+    rat_err_sam = np.load("data/rat_err_sam_"+str(num_gals)+"_"+type_gal+"_"+secondary_property+""+snap_str+".npy")
     
-    rat_mean_hydro = np.load("data/rat_mean_hydro_"+str(num_gals)+"_"+type_gal+"_"+secondary_property+".npy")
-    rat_err_hydro = np.load("data/rat_err_hydro_"+str(num_gals)+"_"+type_gal+"_"+secondary_property+".npy")
+    rat_mean_hydro = np.load("data/rat_mean_hydro_"+str(num_gals)+"_"+type_gal+"_"+secondary_property+""+snap_str+".npy")
+    rat_err_hydro = np.load("data/rat_err_hydro_"+str(num_gals)+"_"+type_gal+"_"+secondary_property+""+snap_str+".npy")
 
     plt.plot(line,np.ones(len(line)),'k--')
 
@@ -63,7 +65,7 @@ for i in range(n_sec):
     
     plt.errorbar(bin_centers,rat_mean_sam,yerr=rat_err_sam,color='dodgerblue',ls='-',label='SAM',alpha=1.,fmt='o',capsize=4)
 
-    plt.errorbar(bin_centers*1.05,rat_mean_hydro,yerr=rat_err_hydro,color='orange',ls='-',label='Hydro',alpha=1.,fmt='o',capsize=4)
+    plt.errorbar(bin_centers*1.05,rat_mean_hydro,yerr=rat_err_hydro,color='#CC6677',ls='-',label='Hydro',alpha=1.,fmt='o',capsize=4)
 
     if i >= 6:
         plt.xlabel(r'$r [{\rm Mpc}/h]$')
@@ -79,5 +81,5 @@ for i in range(n_sec):
     plt.xlim([0.08,13])
     plt.ylim([0.4,1.5])
     plt.text(0.2,0.5,sec_label)
-plt.savefig("figs/shuffle_param_"+type_gal+".png")
+plt.savefig("figs/shuffle_param_"+type_gal+snap_str+".png")
 plt.show()

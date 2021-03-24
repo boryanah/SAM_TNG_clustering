@@ -13,8 +13,8 @@ sim_name = 'TNG300'
 sam_dir = '/mnt/alan1/boryanah/SAM_subvolumes_'+sim_name+'/'
 hydro_dir = "/mnt/gosling1/boryanah/TNG300/"
 
-sample = 'TNG'
-#sample = 'SAM'
+#sample = 'TNG'
+sample = 'SAM'
 
 snap_str = ''
 #snap_str = '_55'
@@ -29,7 +29,8 @@ def density_estimation(m1, m2):
     values = np.vstack([m1, m2])
     kernel = stats.gaussian_kde(values)
     Z = np.reshape(kernel(positions).T, X.shape)
-    return X, Y, Z
+    R, _ = stats.spearmanr(m1, m2)
+    return X, Y, Z, R
 
 pairs = [('conc', 'vmax'), ('conc','env'), ('conc','nsub'), ('conc','spin'), ('conc','spin'), ('conc','tform'),  ('env','nsub'), ('env','spin'), ('env', 'tform')]
 
@@ -78,12 +79,14 @@ for pair in pairs:
         ymin = np.percentile(y[choice], 2.5)
         ymax = np.percentile(y[choice], 97.5)
 
-        X, Y, Z = density_estimation(x[choice], y[choice])
-
+        X, Y, Z, R = density_estimation(x[choice], y[choice])
+        print("R = ", R)
+        
         z_1 = np.percentile(Z, 70.)
         z_2 = np.percentile(Z, 95.)
 
         # Add contour lines
+        plt.text(0.8, 0.9-i*0.1, r"$r_s = %.2f$"%R, ha='center', va='center', color=cs[i], transform=plt.gca().transAxes)
         plt.plot([], [], c=cs[i], label=r"$\log M = %.1f - %.1f$"%(lm_min, lm_max))
         plt.contour(X, Y, Z, colors=cs[i], levels=[z_1, z_2])
 
@@ -95,9 +98,9 @@ for pair in pairs:
     ax.set_xlim([x_min, x_max])
     ax.set_ylim([y_min, y_max])
 
-    plt.legend()
+    plt.legend(loc='upper left')
     plt.ylabel(type_dict[y_type][-1])
     plt.xlabel(type_dict[x_type][-1])
     plt.savefig("figs/"+x_type+"_"+y_type+"_"+sample+".png")
-    #plt.show()
+    plt.show()
     plt.close()

@@ -32,12 +32,21 @@ DEFAULTS['num_gals'] = 12000
 DEFAULTS['type_gal'] = "mstar" #"mstar"#"sfr"#"mhalo"
 DEFAULTS['secondary_property'] = 'shuff'
 
-def main(type_gal, secondary_property, num_gals, want_matching_sam=False, want_matching_hydro=False, record_relative=True, want_cents=False, h=DEFAULTS['h'], snapshot=DEFAULTS['snapshot'], hydro_dir=DEFAULTS['hydro_dir'], SAM_dir=DEFAULTS['SAM_dir'], Lbox=DEFAULTS['Lbox']):
+def main(type_gal, secondary_property, num_gals, snapshot, want_matching_sam=False, want_matching_hydro=False, record_relative=True, want_cents=False, want_abundance=False, h=DEFAULTS['h'], hydro_dir=DEFAULTS['hydro_dir'], SAM_dir=DEFAULTS['SAM_dir'], Lbox=DEFAULTS['Lbox']):
 
     # if we are selecting centrals only, need some padding so that we end up with num_gals objects
-    if want_cents:
-        num_gals *= 2 # padding
-        str_cent = "_cent"
+    if want_cents or want_abundance:
+        # padding
+        fac = 3
+        num_gals *= fac
+        if want_abundance:
+            str_cent = ""#"_abund"
+            if type_gal == 'mstar':
+                f_sat = 0.25
+            elif type_gal == 'sfr':
+                f_sat = 0.33
+        else:
+            str_cent = "_cent"
     else:
         str_cent = ""
 
@@ -82,14 +91,16 @@ def main(type_gal, secondary_property, num_gals, want_matching_sam=False, want_m
     #halo_tform = np.load(SAM_dir+'GalpropTsat'+str_snap+'.npy')[sat_type == 0]
     #halo_tform = np.load(SAM_dir+'GalpropTmerger'+str_snap+'.npy')[sat_type == 0]
     # small z corresponds to large t
-    halo_tform = np.load(SAM_dir+'Halopropz_Mvir_half'+str_snap+'.npy')[::-1]
+    halo_tform = np.load(SAM_dir+'Halopropz_Mvir_half'+str_snap+'.npy')
     halo_vdiskpeak = np.load(SAM_dir+'HalopropVdisk_peak'+str_snap+'.npy')
     halo_spin = np.load(SAM_dir+'HalopropSpin'+str_snap+'.npy')
     halo_sigma_bulge = np.load(SAM_dir+'GalpropSigmaBulge'+str_snap+'.npy')[sat_type == 0]
 
     if want_matching_sam or want_matching_hydro:
         # load the matches with hydro
-        halo_subfind_id = np.load(SAM_dir+'HalopropSubfindID'+str_snap+'.npy')
+        #halo_subfind_id = np.load(SAM_dir+'HalopropSubfindID'+str_snap+'.npy')
+        # TESTING!!!!!!!!!!!!!! problem at snap = 55
+        halo_subfind_id = np.load(SAM_dir+'GalpropSubfindIndex_FP'+str_snap+'.npy')[sat_type==0]
 
     N_halos_sam = len(halo_m_vir)
     inds_gal = np.arange(len(mstar),dtype=int)
@@ -117,13 +128,13 @@ def main(type_gal, secondary_property, num_gals, want_matching_sam=False, want_m
     SubhaloPos_fp = np.load(hydro_dir+'SubhaloPos_fp'+str_snap+'.npy')/1000.
     # this might be best
     #SubMstar_fp = np.load(hydro_dir+'SubhaloMassInRadType_fp'+str_snap+'.npy')[:,4]*1.e10
-    SubMstar_fp = np.load(hydro_dir+'SubhaloMassInMaxRadType_fp'+str_snap+'.npy')[:,4]*1.e10
+    #SubMstar_fp = np.load(hydro_dir+'SubhaloMassInMaxRadType_fp'+str_snap+'.npy')[:,4]*1.e10
     SubhaloSFR_fp = np.load(hydro_dir+'SubhaloSFR_fp'+str_snap+'.npy')
     #SubhaloSFR_fp /= SubMstar_fp
     # TESTING
-    #SubMstar_fp = np.load(hydro_dir+'SubhaloMassInHalfRadType_fp'+str_snap+'.npy')[:,4]*1.e10
+    SubMstar_fp = np.load(hydro_dir+'SubhaloMassInHalfRadType_fp'+str_snap+'.npy')[:,4]*1.e10
     # og
-    SubMstar_fp = np.load(hydro_dir+'SubhaloMassType_fp'+str_snap+'.npy')[:,4]*1.e10
+    #SubMstar_fp = np.load(hydro_dir+'SubhaloMassType_fp'+str_snap+'.npy')[:,4]*1.e10
 
 
 
@@ -141,7 +152,7 @@ def main(type_gal, secondary_property, num_gals, want_matching_sam=False, want_m
     #Group_R_Mean200_fp = np.load(hydro_dir+'Group_R_Mean200_fp'+str_snap+'.npy')/1000
     #Group_V_Crit200_fp = np.load(hydro_dir+'Group_V_Crit200_fp'+str_snap+'.npy')/1000
     Group_V_Crit200_fp = np.load(hydro_dir+'Group_V_TopHat200_fp'+str_snap+'.npy')/1000
-    SubhaloSpin_fp = np.sqrt(np.sum(np.load(hydro_dir+'SubhaloSpin_fp'+str_snap+'.npy')**2,axis=1))
+    GroupSpin_fp = np.load(hydro_dir+'GroupSpin_fp'+str_snap+'.npy')
     SubhaloVelDisp_fp = np.load(hydro_dir+'SubhaloVelDisp_fp'+str_snap+'.npy')
     SubhaloHalfmassRad_fp = np.load(hydro_dir+'SubhaloHalfmassRad_fp'+str_snap+'.npy')
 
@@ -152,7 +163,7 @@ def main(type_gal, secondary_property, num_gals, want_matching_sam=False, want_m
     elif secondary_property == 'tform': halo_prop = halo_tform; group_prop = np.zeros(len(GrRcrit_fp)); order_type = 'desc'; sec_label = r'${\rm formation time \ (descending)}$'
     elif secondary_property == 'conc': halo_prop = halo_c_nfw; group_prop = (Group_Vmax_fp/Group_V_Crit200_fp); order_type = 'mixed'; sec_label = r'${\rm conc. \ (mixed)}$'
     elif secondary_property == 'vdisp': halo_prop = halo_sigma_bulge; group_prop = get_from_sub_prop(SubhaloVelDisp_fp, SubGrNr_fp, N_halos_hydro); order_type = 'mixed'; sec_label = r'${\rm vel. \ disp. \ (mixed)}$'
-    elif secondary_property == 'spin': halo_prop = halo_spin; group_prop = get_from_sub_prop(SubhaloSpin_fp, SubGrNr_fp, N_halos_hydro); order_type = 'desc'; sec_label = r'${\rm spin \ (descending)}$'
+    elif secondary_property == 'spin': halo_prop = halo_spin; group_prop = GroupSpin_fp; order_type = 'desc'; sec_label = r'${\rm spin \ (descending)}$'
     elif secondary_property == 's2r': halo_prop = halo_sigma_bulge**2*halo_rhalo; group_prop = get_from_sub_prop(SubhaloVelDisp_fp**2*SubhaloHalfmassRad_fp, SubGrNr_fp, N_halos_hydro); order_type = 'asc'; sec_label = r'${\rm spin \ (descending)}$'
 
     # --------------------------------------------------------
@@ -186,10 +197,33 @@ def main(type_gal, secondary_property, num_gals, want_matching_sam=False, want_m
         mhalo_low = (np.sort(mhalo)[::-1])[num_gals_sam]
 
     if want_cents:
-        bool_top_cent = np.in1d(inds_top, inds_gal[sat_type == 0])
+        # selecting centrals
+        inds_gal = np.arange(len(mstar),dtype=int)
+        inds_cent = inds_gal[sat_type == 0]
+        bool_top_cent = np.in1d(inds_top, inds_cent)
         print("number of centrals = ",np.sum(bool_top_cent))
-        num_gals_sam //= 2
+        num_gals_sam //= fac
         inds_top = (inds_top[bool_top_cent])[:num_gals_sam]
+        
+    if want_abundance:
+        # selecting centrals and satellites
+        inds_gal = np.arange(len(mstar), dtype=int)
+        inds_cent = inds_gal[sat_type == 0]
+        inds_sats = inds_gal[sat_type != 0]
+        bool_top_cent = np.in1d(inds_top, inds_cent)
+        bool_top_sats = np.in1d(inds_top, inds_sats)
+        print("SAM:")
+        print("number of centrals = ",np.sum(bool_top_cent))
+        print("number of satellites = ",np.sum(bool_top_sats))
+        num_gals_sam //= fac
+        num_sats_sam = int(np.round(f_sat*num_gals_sam))
+        num_cent_sam = num_gals_sam - num_sats_sam
+        inds_top_cent = (inds_top[bool_top_cent])[:num_cent_sam]
+        inds_top_sats = (inds_top[bool_top_sats])[:num_sats_sam]
+        print("number of centrals = ", len(inds_top_cent))
+        print("number of satellites = ", len(inds_top_sats))
+        inds_top = np.hstack((inds_top_cent, inds_top_sats))
+
 
     if want_matching_sam:
         inds_top_matched, inds_halo_host_comm1_matched, inds_halo_host_matched = match_subs(inds_top, hosthaloid, sam_matched, sam_matched)
@@ -205,21 +239,21 @@ def main(type_gal, secondary_property, num_gals, want_matching_sam=False, want_m
         if halo_prop is not None:
             hist_sam_top, hist_sam_bot, bin_cents = get_hod_prop(halo_m_vir[sam_matched],count_sam,halo_prop[sam_matched])
             plot_hod_prop(hist_sam_top, hist_sam_bot, bin_cents, label='SAM')
-            np.save("data/hist_sam_top_"+str(num_gals_sam)+"_"+type_gal+str_cent+"_"+secondary_property+str_snap+'.npy',hist_sam_top)
-            np.save("data/hist_sam_bot_"+str(num_gals_sam)+"_"+type_gal+str_cent+"_"+secondary_property+str_snap+'.npy',hist_sam_bot)
+            np.save("data/hist_sam_top_"+str(int(num_gals_hydro/fac))+"_"+type_gal+str_cent+"_"+secondary_property+str_snap+'.npy',hist_sam_top)
+            np.save("data/hist_sam_bot_"+str(int(num_gals_hydro/fac))+"_"+type_gal+str_cent+"_"+secondary_property+str_snap+'.npy',hist_sam_bot)
 
             # centrals
             hist_cents_sam_top, hist_cents_sam_bot, bin_cents = get_hod_prop(halo_m_vir[sam_matched],count_cents_sam,halo_prop[sam_matched])
-            np.save("data/hist_cents_sam_top_"+str(num_gals_sam)+"_"+type_gal+str_cent+"_"+secondary_property+str_snap+'.npy',hist_cents_sam_top)
-            np.save("data/hist_cents_sam_bot_"+str(num_gals_sam)+"_"+type_gal+str_cent+"_"+secondary_property+str_snap+'.npy',hist_cents_sam_bot)
+            np.save("data/hist_cents_sam_top_"+str(int(num_gals_hydro/fac))+"_"+type_gal+str_cent+"_"+secondary_property+str_snap+'.npy',hist_cents_sam_top)
+            np.save("data/hist_cents_sam_bot_"+str(int(num_gals_hydro/fac))+"_"+type_gal+str_cent+"_"+secondary_property+str_snap+'.npy',hist_cents_sam_bot)
         else:
             hist_sam, bin_cents = get_hod(halo_m_vir[sam_matched],count_sam)
             plot_hod(hist_sam, bin_cents,label='SAM')
-            np.save("data/hist_sam_"+str(num_gals_sam)+"_"+type_gal+str_cent+str_snap+'.npy',hist_sam)
+            np.save("data/hist_sam_"+str(int(num_gals_hydro/fac))+"_"+type_gal+str_cent+str_snap+'.npy',hist_sam)
 
             # centrals
             hist_cents_sam, bin_cents = get_hod(halo_m_vir[sam_matched],count_cents_sam)
-            np.save("data/hist_cents_sam_"+str(num_gals_sam)+"_"+type_gal+str_cent+str_snap+'.npy',hist_cents_sam)
+            np.save("data/hist_cents_sam_"+str(int(num_gals_hydro/fac))+"_"+type_gal+str_cent+str_snap+'.npy',hist_cents_sam)
 
     else:
         # total histogram of sats + centrals and galaxy counts per halo
@@ -242,7 +276,6 @@ def main(type_gal, secondary_property, num_gals, want_matching_sam=False, want_m
         else:
             # TESTING tuks
             hist_sam, bin_cents = get_hod(halo_m_vir, count_sam)#, other_group_mass=GrMcrit_fp) # TESTING
-            print(hist_sam)
             plot_hod(hist_sam, bin_cents,label='SAM')
             np.save("data/hist_sam_"+str(num_gals_sam)+"_"+type_gal+str_cent+str_snap+'.npy',hist_sam)
 
@@ -270,10 +303,31 @@ def main(type_gal, secondary_property, num_gals, want_matching_sam=False, want_m
         print(len(inds_top))
 
     if want_cents:
+        # selecting centrals
+        unique_hosts, inds_cent = np.unique(SubGrNr_fp,return_index=True)
         bool_top_cent = np.in1d(inds_top, inds_cent)
-        num_gals_hydro //= 2
+        num_gals_hydro //= fac
         inds_top = (inds_top[bool_top_cent])[:num_gals_hydro]
         print("number of centrals = ",np.sum(bool_top_cent))
+
+    if want_abundance:
+        # selecting centrals and satellites
+        unique_hosts, inds_cent = np.unique(SubGrNr_fp, return_index=True)
+        inds_gal = np.arange(len(SubGrNr_fp), dtype=int)
+        inds_sats = inds_gal[np.in1d(inds_gal, inds_cent, invert=True)]
+        bool_top_cent = np.in1d(inds_top, inds_cent)
+        bool_top_sats = np.in1d(inds_top, inds_sats)
+        print("TNG:")
+        print("number of centrals = ",np.sum(bool_top_cent))
+        print("number of satellites = ",np.sum(bool_top_sats))
+        num_gals_hydro //= fac
+        num_sats_hydro = int(np.round(f_sat*num_gals_hydro))
+        num_cent_hydro = num_gals_hydro - num_sats_hydro
+        inds_top_cent = (inds_top[bool_top_cent])[:num_cent_hydro]
+        inds_top_sats = (inds_top[bool_top_sats])[:num_sats_hydro]
+        print("number of centrals = ", len(inds_top_cent))
+        print("number of satellites = ", len(inds_top_sats))
+        inds_top = np.hstack((inds_top_cent, inds_top_sats))
         
     if want_matching_hydro:
         inds_top_matched, inds_halo_host_comm1_matched, inds_halo_host_matched = match_subs(inds_top, SubGrNr_fp, sam_matched, hydro_matched)
@@ -345,9 +399,11 @@ if __name__ == '__main__':
     parser.add_argument('--type_gal', help='Galaxy type', default=DEFAULTS['type_gal'])
     parser.add_argument('--secondary_property', help='Secondary property', default=DEFAULTS['secondary_property'])
     parser.add_argument('--num_gals', help='Number of galaxies', type=int, default=DEFAULTS['num_gals'])
+    parser.add_argument('--snapshot', help='Simulation snapshot', type=int, default=DEFAULTS['snapshot'])
     parser.add_argument('--want_matching_sam', help='Match SAM?', action='store_true')
     parser.add_argument('--want_matching_hydro', help='Match Hydro?', action='store_true')
     parser.add_argument('--want_cents', help='Work with centrals only?', action='store_true')
+    parser.add_argument('--want_abundance', help='Work with centrals and satellites', action='store_true')
     args = parser.parse_args()
     args = vars(args)
     main(**args)

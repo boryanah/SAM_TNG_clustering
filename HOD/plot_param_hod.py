@@ -16,6 +16,9 @@ line = np.linspace(0,40,3)
 
 bin_cents = np.load("data/bin_cents.npy")
 
+#str_snap = ''
+str_snap = '_55'
+
 num_gals = 12000 #6000 # 1200 # 12000
 type_gal = 'mstar'#'sfr'#'mstar_cent' #'mhalo'#'mstar'#'sfr'
 
@@ -41,15 +44,15 @@ for i in range(n_sec):
     secondary_property = secondary_properties[i]
     sec_label = sec_labels[i]
     
-    hist_sam_top = np.load("data/hist_sam_top_"+str(num_gals)+"_"+type_gal+"_"+secondary_property+".npy")
-    hist_sam_bot = np.load("data/hist_sam_bot_"+str(num_gals)+"_"+type_gal+"_"+secondary_property+".npy")
-    hist_hydro_top = np.load("data/hist_hydro_top_"+str(num_gals)+"_"+type_gal+"_"+secondary_property+".npy")
-    hist_hydro_bot = np.load("data/hist_hydro_bot_"+str(num_gals)+"_"+type_gal+"_"+secondary_property+".npy")
+    hist_sam_top = np.load("data/hist_sam_top_"+str(num_gals)+"_"+type_gal+"_"+secondary_property+str_snap+".npy")
+    hist_sam_bot = np.load("data/hist_sam_bot_"+str(num_gals)+"_"+type_gal+"_"+secondary_property+str_snap+".npy")
+    hist_hydro_top = np.load("data/hist_hydro_top_"+str(num_gals)+"_"+type_gal+"_"+secondary_property+str_snap+".npy")
+    hist_hydro_bot = np.load("data/hist_hydro_bot_"+str(num_gals)+"_"+type_gal+"_"+secondary_property+str_snap+".npy")
     # centrals
-    hist_cents_sam_top = np.load("data/hist_cents_sam_top_"+str(num_gals)+"_"+type_gal+"_"+secondary_property+".npy")
-    hist_cents_sam_bot = np.load("data/hist_cents_sam_bot_"+str(num_gals)+"_"+type_gal+"_"+secondary_property+".npy")
-    hist_cents_hydro_top = np.load("data/hist_cents_hydro_top_"+str(num_gals)+"_"+type_gal+"_"+secondary_property+".npy")
-    hist_cents_hydro_bot = np.load("data/hist_cents_hydro_bot_"+str(num_gals)+"_"+type_gal+"_"+secondary_property+".npy")
+    hist_cents_sam_top = np.load("data/hist_cents_sam_top_"+str(num_gals)+"_"+type_gal+"_"+secondary_property+str_snap+".npy")
+    hist_cents_sam_bot = np.load("data/hist_cents_sam_bot_"+str(num_gals)+"_"+type_gal+"_"+secondary_property+str_snap+".npy")
+    hist_cents_hydro_top = np.load("data/hist_cents_hydro_top_"+str(num_gals)+"_"+type_gal+"_"+secondary_property+str_snap+".npy")
+    hist_cents_hydro_bot = np.load("data/hist_cents_hydro_bot_"+str(num_gals)+"_"+type_gal+"_"+secondary_property+str_snap+".npy")
     
     plt.plot(line,np.ones(len(line)),'k--')
 
@@ -90,5 +93,5 @@ for i in range(n_sec):
     else:
         plt.gca().axes.yaxis.set_ticklabels([])
         plt.gca().axes.yaxis.set_ticks([])
-plt.savefig("figs/hod_param_"+type_gal+".png")
+plt.savefig("figs/hod_param_"+type_gal+str_snap+".png")
 plt.show()

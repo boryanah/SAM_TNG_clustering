@@ -23,6 +23,9 @@ bin_cents = np.load("data/bin_cents.npy")
 
 fig, axes = plt.subplots(len(type_gals),len(num_gals),figsize=(18,9))
 
+#snap_str = ''
+snap_str = '_55'
+
 color_sam = 'dodgerblue'
 color_hydro = '#CC6677'
 ls = '-'
@@ -40,10 +43,10 @@ for i in range(len(type_gals)):
         
         plot_label = r'$ %s, \ %d \ gals.}$'%(type_str,num_gal)
 
-        hist_sam = np.load("data/hist_sam_"+str(num_gal)+"_"+type_gal+".npy")#
-        hist_hydro = np.load("data/hist_hydro_"+str(num_gal)+"_"+type_gal+".npy")#
-        hist_cents_sam = np.load("data/hist_cents_sam_"+str(num_gal)+"_"+type_gal+".npy")#
-        hist_cents_hydro = np.load("data/hist_cents_hydro_"+str(num_gal)+"_"+type_gal+".npy")#
+        hist_sam = np.load("data/hist_sam_"+str(num_gal)+"_"+type_gal+snap_str+".npy")#
+        hist_hydro = np.load("data/hist_hydro_"+str(num_gal)+"_"+type_gal+snap_str+".npy")#
+        hist_cents_sam = np.load("data/hist_cents_sam_"+str(num_gal)+"_"+type_gal+snap_str+".npy")#
+        hist_cents_hydro = np.load("data/hist_cents_hydro_"+str(num_gal)+"_"+type_gal+snap_str+".npy")#
         plt.plot(line,np.ones(len(line)),'k--')
 
         plt.plot([],[],color=color_sam,ls=ls,label=r'${\rm SAM}$')
@@ -77,5 +80,5 @@ for i in range(len(type_gals)):
             plt.gca().axes.yaxis.set_ticklabels([])
             plt.gca().axes.yaxis.set_ticks([])
         k += 1
-plt.savefig("figs/hod_all.png") #
+plt.savefig("figs/hod_all"+snap_str+".png") #
 plt.show()

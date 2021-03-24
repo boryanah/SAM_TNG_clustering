@@ -19,6 +19,9 @@ type_str = type_dict[type_gal]
 
 line = np.linspace(0,40,3)
 
+#snap_str = ''
+snap_str = '_55'
+
 bin_cents = np.load("data/bin_cents.npy")
 
 # maybe load average
@@ -39,10 +42,10 @@ for i in range(n_sec):
     secondary_property = secondary_properties[i]
     sec_label = sec_labels[i]
     
-    shmr_sam_top = np.load("data/shmr_sam_top_"+str(num_gals)+"_"+type_gal+"_"+secondary_property+".npy")
-    shmr_sam_bot = np.load("data/shmr_sam_bot_"+str(num_gals)+"_"+type_gal+"_"+secondary_property+".npy")
-    shmr_hydro_top = np.load("data/shmr_hydro_top_"+str(num_gals)+"_"+type_gal+"_"+secondary_property+".npy")
-    shmr_hydro_bot = np.load("data/shmr_hydro_bot_"+str(num_gals)+"_"+type_gal+"_"+secondary_property+".npy")
+    shmr_sam_top = np.load("data/shmr_sam_top_"+str(num_gals)+"_"+type_gal+"_"+secondary_property+snap_str+".npy")
+    shmr_sam_bot = np.load("data/shmr_sam_bot_"+str(num_gals)+"_"+type_gal+"_"+secondary_property+snap_str+".npy")
+    shmr_hydro_top = np.load("data/shmr_hydro_top_"+str(num_gals)+"_"+type_gal+"_"+secondary_property+snap_str+".npy")
+    shmr_hydro_bot = np.load("data/shmr_hydro_bot_"+str(num_gals)+"_"+type_gal+"_"+secondary_property+snap_str+".npy")
     
     plt.plot(line,np.ones(len(line)),'k--')
 
@@ -76,5 +79,5 @@ for i in range(n_sec):
     else:
         plt.gca().axes.yaxis.set_ticklabels([])
         plt.gca().axes.yaxis.set_ticks([])
-plt.savefig("figs/shmr_param_"+type_gal+".png")
+plt.savefig("figs/shmr_param_"+type_gal+snap_str+".png")
 plt.show()

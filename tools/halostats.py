@@ -139,7 +139,7 @@ def get_jack_corr(xyz_true,w_true,xyz_hod,w_hod,Lbox):
     print("true min = ", true_min)
     print("hod max = ", hod_max)
     print("hod min = ", hod_min)
-    if true_max > Lbox or true_min > Lbox or hod_max > Lbox or hod_min > Lbox:
+    if true_max > Lbox or true_min < 0. or hod_max > Lbox or hod_min < 0.:
         print("NOTE: we are using UNFAIR methods")
         xyz_true = xyz_true % Lbox
         xyz_hod = xyz_hod % Lbox
@@ -358,7 +358,10 @@ def get_hist_count(inds_top, hosts_top, sub_pos, group_mass, group_pos, Lbox, re
             nstart_halo[hosts[i]] = cumulative
 
             if group_rad is not None:
-                rel_pos_norm = rel_pos_gals_halo/group_rad[hosts[i]]
+                #print(rel_pos_gals_halo)
+                #print(group_rad[hosts[i]])
+                #print("---------------")
+                rel_pos_gals_halo[cumulative:cumulative+n_gal] /= group_rad[hosts[i]]
                 
             cumulative += n_gal
             
@@ -386,18 +389,19 @@ def get_hist_count(inds_top, hosts_top, sub_pos, group_mass, group_pos, Lbox, re
         print(count_halo[:100])
         '''
 
-        if group_rad is not None:
-            return hist, bin_cents, count_halo, nstart_halo, rel_pos_norm
+        #if group_rad is not None:
+        #    return hist, bin_cents, count_halo, nstart_halo, rel_pos_norm
         
         return hist, bin_cents, count_halo, nstart_halo, rel_pos_gals_halo
 
     
     return hist, bin_cents, count_halo
 
-def get_xyz_w(count_sel,nstart_sel,xyz_all,rel_pos_gals,dtype,Lbox):
+def get_xyz_w(count_sel, nstart_sel, xyz_all, rel_pos_gals, dtype, Lbox):
     '''
     returns the xyz position and the weights; also works if feeding relative positions
     '''
+    
     xyz_cents_sel = xyz_all[count_sel > 0]
     nstart_sel = nstart_sel[count_sel > 0]
     count_sel = count_sel[count_sel > 0]

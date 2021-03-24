@@ -7,7 +7,7 @@ import scipy.spatial as spatial
 import itertools
 
 # do the computation for the hydro galaxies or SAM?
-want_true = 1
+want_true = 0
 
 # what are we displaying
 opt = 'norm'#sys.argv[1]#"partial_fenv"#"partial_s2r"#"shuff"#"spin"#"shuff"#"conc"#"vani"#"shuff"#"env"#"partial_vani""partial_s2r""vdisp"
