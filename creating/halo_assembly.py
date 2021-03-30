@@ -19,13 +19,22 @@ Lbox = 205.
 m_min = 12
 m_max = 14.5
 
+# save the low and high inds
+save_inds = True
+
 #m_bins = np.logspace(m_min, m_max, 5)
 #m_binc = (m_bins[1:] + m_bins[:-1])*.5
 m_binc = np.linspace(12, 14.5, 6)
-delta = 0.4
+if save_inds:
+    delta = 0.2 # save
+else:
+    delta = 0.3 #og
 
 # how are we dividing into top and bottom
-percentile = 30.
+if save_inds:
+    percentile = 5. # save
+else:
+    percentile = 30. # og
 
 # sim params
 sam_dir = '/mnt/alan1/boryanah/SAM_subvolumes_TNG300/'
@@ -67,8 +76,24 @@ elif type_prop == 'conc':
     #GroupEnv_fp = np.load(hydro_dir+'GroupConc_fp'+str_snap+'.npy')
 
 
+# check savings
+print(f'{10.**(m_binc[3]+0.4):.3e}')
+print(f'{10.**(m_binc[3]-0.4):.3e}')
+inds_high = np.load("visuals/inds_high.npy")
+print("high masses:")
+for ind_high in inds_high:
+    print(f'{GrMcrit_fp[ind_high]:.3e}')
+
+inds_low = np.load("visuals/inds_low.npy")
+print("low masses:")
+for ind_low in inds_low:
+    print(f'{GrMcrit_fp[ind_low]:.3e}')
+quit()
+
+
 # sort all arrays in order of halo mass
 i_sort = np.argsort(GrMcrit_fp)[::-1]
+i_sort_rev = np.argsort(i_sort)
 GrMcrit_fp = GrMcrit_fp[i_sort]
 GroupPos_fp = GroupPos_fp[i_sort]
 GroupEnv_fp = GroupEnv_fp[i_sort]
@@ -82,7 +107,8 @@ bins = np.logspace(-0.7, 1.5, 11)
 bin_cents = (bins[1:] + bins[:-1])*.5
 
 # if we have fewer than thresh, bad things
-thresh = 2000
+#thresh = 2000 #og
+thresh = 20 #og
 
 nrow = 2
 ncol = len(m_binc)//nrow
@@ -131,6 +157,16 @@ for i in range(len(m_binc)):
     halo_p = halo_posi[halo_env_thr < halo_envi]
     group_p = group_posi[group_env_thr < group_envi]
 
+    if save_inds:
+        if i == 3:
+            print("logM = ", m_binc[i])
+            inds_high = group_choice[group_env_thr < group_envi]
+            inds_high = i_sort[inds_high]
+            envs = (GroupEnv_fp[i_sort_rev])[inds_high]
+            #envs = (GroupEnv_fp)[inds_high]
+            print("high environments = ", envs)
+            print("lowest = ", np.min(envs))
+        
     print("sum high = ", np.sum(halo_env_thr < halo_envi), np.sum(group_env_thr < group_envi))
 
     # parse x, y, z
@@ -172,6 +208,15 @@ for i in range(len(m_binc)):
     halo_p = halo_posi[halo_env_thr > halo_envi]
     group_p = group_posi[group_env_thr > group_envi]
 
+    if save_inds:
+        if i == 3:
+            print("logM = ", m_binc[i])
+            inds_low = group_choice[group_env_thr > group_envi]
+            #envs = (GroupEnv_fp)[inds_low]
+            inds_low = i_sort[inds_low]
+            envs = (GroupEnv_fp[i_sort_rev])[inds_low]
+            print("low environments = ", envs)
+            print("highest = ", np.max(envs))
     print("sum low = ", np.sum(halo_env_thr > halo_envi), np.sum(group_env_thr > group_envi))
 
     # parse x, y, z
@@ -185,10 +230,10 @@ for i in range(len(m_binc)):
     # show result
     plt.subplot(nrow, ncol, i+1)
     plt.plot(bin_cents, np.ones(len(bin_cents)), 'k--')
-    plt.plot(bin_cents, group_xi_hi/group_xi, color=color_tng, label='TNG')
-    plt.plot(bin_cents, halo_xi_hi/halo_xi, color=color_sam, label='SAM')
-    plt.plot(bin_cents, group_xi_lo/group_xi, color=color_tng, ls='--', label='TNG')
-    plt.plot(bin_cents, halo_xi_lo/halo_xi, color=color_sam, ls='--', label='SAM')
+    plt.plot(bin_cents, group_xi_hi/group_xi, color=color_tng, label='TNG, top %d'%percentile)
+    plt.plot(bin_cents, halo_xi_hi/halo_xi, color=color_sam, label='SAM, top %d'%percentile)
+    plt.plot(bin_cents, group_xi_lo/group_xi, color=color_tng, ls='--', label='TNG, bottom %d'%percentile)
+    plt.plot(bin_cents, halo_xi_lo/halo_xi, color=color_sam, ls='--', label='SAM, bottom %d'%percentile)
     plt.xscale('log')
     if i == 0:
         plt.legend(loc='upper left')
@@ -202,5 +247,8 @@ for i in range(len(m_binc)):
     plt.xlabel(r"$r \ {\rm Mpc}/h$")
     if i%ncol == 0:
         plt.ylabel(r"$\xi_{\rm high, low}(r) / \xi_{\rm median}(r)$")
+
+np.save("visuals/inds_high.npy", inds_high)
+np.save("visuals/inds_low.npy", inds_low)
 plt.savefig("figs/hab_"+type_prop+".png")
 plt.show()
