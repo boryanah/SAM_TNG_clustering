@@ -13,15 +13,15 @@ sim_name = 'TNG300'
 sam_dir = '/mnt/alan1/boryanah/SAM_subvolumes_'+sim_name+'/'
 hydro_dir = "/mnt/gosling1/boryanah/TNG300/"
 
-#sample = 'TNG'
-sample = 'SAM'
+sample = 'TNG'
+#sample = 'SAM'
 
 snap_str = ''
 #snap_str = '_55'
 #mass_type = 'Crit'
 mass_type = 'Mean'
 
-type_dict = {'conc': ["GroupConc_nfw_dm.npy", 'HalopropC_nfw'+snap_str+'.npy', r"$c_{\rm NFW}$"], 'nsub': ["GroupNsubs_dm.npy", "no shit", r"$N_{\rm subs}$"], 'env': ["GroupEnv_dm.npy", 'HalopropEnvironment'+snap_str+'.npy', r"${\rm envir.}$"], 'spin': ["GroupSpin_dm.npy", "HalopropSpin.npy", r"${\rm spin}$"], 'tform': ["no shit", 'Halopropz_Mvir_half'+snap_str+'.npy', r"$z_{\rm half}$"], 'vmax': ["Group_Vmax_dm.npy", 'HalopropVdisk_peak'+snap_str+'.npy', r"$V_{\rm max}$"]}
+type_dict = {'conc': ["GroupConc_nfw_dm.npy", 'HalopropC_nfw'+snap_str+'.npy', r"$c_{\rm NFW}$"], 'nsub': ["GroupNsubs_dm.npy", "no shit", r"$N_{\rm subs}$"], 'env': ["GroupEnv_dm.npy", 'HalopropEnvironment'+snap_str+'.npy', r"${\rm envir.}$"], 'spin': ["GroupSpin_dm.npy", "HalopropSpin.npy", r"${\rm spin}$"], 'tform': ["no shit", 'Halopropz_Mvir_half'+snap_str+'.npy', r"$z_{\rm half}$"], 'vmax': ["Group_Vmax_dm.npy", 'HalopropVdisk_peak'+snap_str+'.npy', r"$V_{\rm max}$"], 'vani': ["GroupVelAnis_dm_300000.npy", 'no shit', r"$V_{\rm ani}$"], 'mover': ["GroupNsubs_dm.npy", "Group_M_Crit200_dm.npy", r"$M_{\rm FoF}/M_{\rm 200}$"]}#, 'mover': ["GroupMassType_dm.npy", "Group_M_Crit200_dm.npy", r"$M_{\rm FoF}/M_{\rm 200}$"], }
 
 def density_estimation(m1, m2):
     X, Y = np.mgrid[xmin:xmax:100j, ymin:ymax:100j]
@@ -33,6 +33,8 @@ def density_estimation(m1, m2):
     return X, Y, Z, R
 
 pairs = [('conc', 'vmax'), ('conc','env'), ('conc','nsub'), ('conc','spin'), ('conc','spin'), ('conc','tform'),  ('env','nsub'), ('env','spin'), ('env', 'tform')]
+pairs = [('conc', 'vani'), ('env', 'vani')] # TESTING for vani
+pairs = [('env', 'mover')] # TESTING for m ratio
 
 for pair in pairs:
     print(pair)
@@ -40,8 +42,13 @@ for pair in pairs:
     
     if sample == 'TNG':
         if type_dict[x_type][0] == 'no shit' or type_dict[y_type][0] == 'no shit': continue
-        y = np.load(hydro_dir+type_dict[y_type][0])
+
         x = np.load(hydro_dir+type_dict[x_type][0])
+        #y = np.load(hydro_dir+type_dict[y_type][0]) # og
+        #y = np.zeros(len(x)) # TESTING for vani
+        #y[:300000] = np.load(hydro_dir+type_dict[y_type][0]) # TESTING for vani
+        #y = np.load(hydro_dir+type_dict[y_type][0])[:, 1]/np.load(hydro_dir+type_dict[y_type][1]) # TESTING for m ratio fof
+        y = np.load(hydro_dir+type_dict[y_type][0])/np.load(hydro_dir+type_dict[y_type][1]) # TESTING for m ratio n subs
         mass = np.load(hydro_dir+"Group_M_Crit200_dm.npy")*1.e10
 
 
@@ -52,11 +59,12 @@ for pair in pairs:
         y = np.load(sam_dir+type_dict[y_type][1])
 
 
-    lms = np.linspace(12, 13.5, 4)
+    lms = np.linspace(12, 13.5, 4) # og
+    #lms = np.linspace(12, 13.5, 7)
+    #lms = np.linspace(12, 13.4, 5)
     print(lms)
 
-    cs = ['dodgerblue', '#CC6677', 'gray']
-
+    cs = ['dodgerblue', '#CC6677', 'gray', 'crimson', 'navy', 'black']
 
     x_max = -1000000.
     y_max = -1000000.
@@ -93,7 +101,7 @@ for pair in pairs:
         if xmin < x_min: x_min = xmin
         if ymin < y_min: y_min = ymin
         if xmax > x_max: x_max = xmax
-        if ymax > y_max: y_max = ymax
+        if ymax > y_max: y_max = ymax #1.2 vani
 
     ax.set_xlim([x_min, x_max])
     ax.set_ylim([y_min, y_max])

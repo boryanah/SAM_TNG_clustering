@@ -3,15 +3,23 @@ import matplotlib.pyplot as plt
 
 import Corrfunc
 
-from matplotlib import rc
-rc('font',**{'family':'serif','serif':['Times'],'size':14})
-rc('text', usetex=True)
+#from matplotlib import rc
+#rc('font',**{'family':'serif','serif':['Times'],'size':14})
+#rc('text', usetex=True)
+
+import plotparams
+plotparams.buba()
 
 
 # what property
-#type_prop = 'conc'
-type_prop = 'env'
+type_prop = 'conc'
+#type_prop = 'env'
 
+if type_prop == 'conc':
+    lab_prop = 'concentration'
+elif type_prop == 'env':
+    lab_prop = 'environment'
+    
 # size of box
 Lbox = 205.
 
@@ -20,13 +28,13 @@ m_min = 12
 m_max = 14.5
 
 # save the low and high inds
-save_inds = True
+save_inds = 0#True
 
 #m_bins = np.logspace(m_min, m_max, 5)
 #m_binc = (m_bins[1:] + m_bins[:-1])*.5
 m_binc = np.linspace(12, 14.5, 6)
 if save_inds:
-    delta = 0.2 # save
+    delta = 0.05 # save
 else:
     delta = 0.3 #og
 
@@ -42,8 +50,8 @@ hydro_dir = '/mnt/gosling1/boryanah/TNG300/'
 str_snap = ''
 
 # colors for plotting
-color_tng = 'dodgerblue'
-color_sam = '#CC6677'
+color_sam = 'dodgerblue'
+color_tng = '#CC6677'
 
 # loading SAM
 sat_type = np.load(sam_dir+'GalpropSatType'+str_snap+'.npy')
@@ -61,14 +69,14 @@ halo_mvir = halo_mvir[i_sort]
 halo_pos = halo_pos[i_sort]
 halo_env = halo_env[i_sort]
 
-
 # correct positions
 halo_pos[halo_pos < 0] += Lbox
 halo_pos[halo_pos >= Lbox] -= Lbox
 
 # loading TNG
 GroupPos_fp = np.load(hydro_dir+'GroupPos_fp'+str_snap+'.npy')/1000.
-GrMcrit_fp = np.load(hydro_dir+'Group_M_TopHat200_fp'+str_snap+'.npy')*1.e10
+#GrMcrit_fp = np.load(hydro_dir+'Group_M_TopHat200_fp'+str_snap+'.npy')*1.e10
+GrMcrit_fp = np.load(hydro_dir+'GroupMassType_fp'+str_snap+'.npy')[:, 1]*1.e10
 if type_prop == 'env':
     GroupEnv_fp = np.load(hydro_dir+'GroupEnv_fp'+str_snap+'.npy')
 elif type_prop == 'conc':
@@ -77,18 +85,16 @@ elif type_prop == 'conc':
 
 
 # check savings
-print(f'{10.**(m_binc[3]+0.4):.3e}')
-print(f'{10.**(m_binc[3]-0.4):.3e}')
-inds_high = np.load("visuals/inds_high.npy")
+inds_high = np.load("visuals_fof/inds_high.npy")
 print("high masses:")
 for ind_high in inds_high:
-    print(f'{GrMcrit_fp[ind_high]:.3e}')
+    print(f'{GrMcrit_fp[ind_high]:.3e}', f'{GroupEnv_fp[ind_high]:.1f}')
 
-inds_low = np.load("visuals/inds_low.npy")
+inds_low = np.load("visuals_fof/inds_low.npy")
 print("low masses:")
 for ind_low in inds_low:
-    print(f'{GrMcrit_fp[ind_low]:.3e}')
-quit()
+    print(f'{GrMcrit_fp[ind_low]:.3e}', f'{GroupEnv_fp[ind_low]:.1f}')
+
 
 
 # sort all arrays in order of halo mass
@@ -107,8 +113,11 @@ bins = np.logspace(-0.7, 1.5, 11)
 bin_cents = (bins[1:] + bins[:-1])*.5
 
 # if we have fewer than thresh, bad things
-#thresh = 2000 #og
-thresh = 20 #og
+if save_inds:
+    thresh = 20
+else:
+    thresh = 2000 #og
+
 
 nrow = 2
 ncol = len(m_binc)//nrow
@@ -230,15 +239,16 @@ for i in range(len(m_binc)):
     # show result
     plt.subplot(nrow, ncol, i+1)
     plt.plot(bin_cents, np.ones(len(bin_cents)), 'k--')
-    plt.plot(bin_cents, group_xi_hi/group_xi, color=color_tng, label='TNG, top %d'%percentile)
-    plt.plot(bin_cents, halo_xi_hi/halo_xi, color=color_sam, label='SAM, top %d'%percentile)
-    plt.plot(bin_cents, group_xi_lo/group_xi, color=color_tng, ls='--', label='TNG, bottom %d'%percentile)
-    plt.plot(bin_cents, halo_xi_lo/halo_xi, color=color_sam, ls='--', label='SAM, bottom %d'%percentile)
+    
+    plt.plot(bin_cents, group_xi_hi/group_xi, color=color_tng, label=f'TNG, high {lab_prop:s}')#top %d'%percentile)
+    plt.plot(bin_cents, halo_xi_hi/halo_xi, color=color_sam, label=f'SAM, high {lab_prop:s}')#top %d'%percentile)
+    plt.plot(bin_cents, group_xi_lo/group_xi, color=color_tng, ls='--', label=f'TNG, low {lab_prop:s}')#bottom %d'%percentile)
+    plt.plot(bin_cents, halo_xi_lo/halo_xi, color=color_sam, ls='--', label=f'SAM, low {lab_prop:s}')#bottom %d'%percentile)
     plt.xscale('log')
     if i == 0:
-        plt.legend(loc='upper left')
+        plt.legend(loc='upper left', frameon=False, fontsize=14)
 
-    plt.text(0.8, 0.9, r"$\log M = %.1f$"%m_binc[i], ha='center', va='center', transform=plt.gca().transAxes)
+    plt.text(0.75, 0.9, r"$\log M = %.1f$"%m_binc[i], ha='center', va='center', transform=plt.gca().transAxes)
         
     if type_prop == 'conc':
         plt.ylim([0, 8.])
@@ -248,7 +258,8 @@ for i in range(len(m_binc)):
     if i%ncol == 0:
         plt.ylabel(r"$\xi_{\rm high, low}(r) / \xi_{\rm median}(r)$")
 
-np.save("visuals/inds_high.npy", inds_high)
-np.save("visuals/inds_low.npy", inds_low)
+if save_inds:
+    np.save("visuals_fof/inds_high.npy", inds_high)
+    np.save("visuals_fof/inds_low.npy", inds_low)
 plt.savefig("figs/hab_"+type_prop+".png")
 plt.show()

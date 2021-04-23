@@ -62,6 +62,8 @@ all_halo_inds_uni = all_halo_inds[inds]
 
 # for each TNG subhalo, what is its ROCKSTAR host
 SubhaloHaloNr = np.zeros(len(SubhaloMstar_fp), dtype=int)-1
-(SubhaloHaloNr[choice])[all_idx_uni] = all_halo_inds_uni
+tmp = SubhaloHaloNr[choice] # I think that's what I did
+tmp[all_idx_uni] = all_halo_inds_uni
+SubhaloHaloNr[choice] = tmp
 np.save("SubhaloHaloNr_fp.npy", SubhaloHaloNr)
 #dic = dict(zip(halo_inds, idx))
